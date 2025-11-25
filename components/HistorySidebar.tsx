@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Play, Trash2, Clock, FileText, Copy, Check, Star, AlertCircle } from 'lucide-react';
+import { X, Play, Trash2, Clock, FileText, Copy, Check, Star, AlertCircle, Download } from 'lucide-react';
 import { Translation, GameHistoryItem } from '../types';
 
 interface HistorySidebarProps {
@@ -31,6 +31,22 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
     }).catch(err => {
       console.error('Failed to copy text: ', err);
     });
+  };
+
+  const handleDownload = (item: GameHistoryItem) => {
+    try {
+      const blob = new Blob([item.code], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `dr-game-${item.id}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Download failed', err);
+    }
   };
 
   return (
@@ -145,6 +161,16 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                       >
                         <Play size={16} />
                         {t.play}
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownload(item);
+                        }}
+                        className="p-2 text-slate-500 hover:text-green-400 hover:bg-green-400/10 rounded transition-colors"
+                        title={t.download}
+                      >
+                         <Download size={16} />
                       </button>
                       <button
                         onClick={(e) => {
