@@ -223,6 +223,9 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
       try {
         if (typeof win.initGame === 'function') {
            win.initGame();
+        } else if (win.GAME_CONFIG && typeof win.GAME_CONFIG.initGame === 'function') {
+           // Fallback if initGame is inside config
+           win.GAME_CONFIG.initGame();
         } else {
            // If initGame missing, force hard reload
            setRefreshKey(k => k + 1);

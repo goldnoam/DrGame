@@ -98,6 +98,11 @@ export interface Translation {
   stateLoaded: string;
   noSavedState: string;
   soundSettings: string;
+  // Prompt Tools
+  clearPrompt: string;
+  exportPrompt: string;
+  promptExported: string;
+  promptCleared: string;
 }
 
 export interface GameGenerationResponse {

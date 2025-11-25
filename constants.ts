@@ -71,7 +71,11 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     stateSaved: "State Saved!",
     stateLoaded: "State Loaded!",
     noSavedState: "No saved state found.",
-    soundSettings: "Sound Settings"
+    soundSettings: "Sound Settings",
+    clearPrompt: "Clear Prompt",
+    exportPrompt: "Export Prompt",
+    promptExported: "Prompt downloaded!",
+    promptCleared: "Prompt cleared!"
   },
   [Language.HEBREW]: {
     title: "ד\"ר גיים",
@@ -142,7 +146,11 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     stateSaved: "נשמר!",
     stateLoaded: "נטען!",
     noSavedState: "לא נמצאה שמירה.",
-    soundSettings: "הגדרות סאונד"
+    soundSettings: "הגדרות סאונד",
+    clearPrompt: "נקה הנחיה",
+    exportPrompt: "ייצא הנחיה",
+    promptExported: "הנחיה הורדה!",
+    promptCleared: "הנחיה נוקתה!"
   },
   [Language.CHINESE]: {
     title: "游戏博士",
@@ -213,7 +221,11 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     stateSaved: "状态已保存！",
     stateLoaded: "状态已加载！",
     noSavedState: "未找到保存的状态。",
-    soundSettings: "声音设置"
+    soundSettings: "声音设置",
+    clearPrompt: "清空",
+    exportPrompt: "导出",
+    promptExported: "已导出!",
+    promptCleared: "已清空!"
   },
   [Language.HINDI]: {
     title: "Dr. Game",
@@ -284,7 +296,11 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     stateSaved: "राज्य सहेजा गया!",
     stateLoaded: "राज्य लोड किया गया!",
     noSavedState: "कोई सहेजा गया राज्य नहीं मिला।",
-    soundSettings: "ध्वनि सेटिंग्स"
+    soundSettings: "ध्वनि सेटिंग्स",
+    clearPrompt: "साफ़ करें",
+    exportPrompt: "निर्यात करें",
+    promptExported: "डाउनलोड किया गया!",
+    promptCleared: "साफ़ किया गया!"
   },
   [Language.FRENCH]: {
     title: "Dr. Game",
@@ -355,7 +371,11 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     stateSaved: "État sauvegardé !",
     stateLoaded: "État chargé !",
     noSavedState: "Aucun état sauvegardé.",
-    soundSettings: "Paramètres sonores"
+    soundSettings: "Paramètres sonores",
+    clearPrompt: "Effacer",
+    exportPrompt: "Exporter",
+    promptExported: "Téléchargé !",
+    promptCleared: "Effacé !"
   },
   [Language.GERMAN]: {
     title: "Dr. Game",
@@ -426,7 +446,11 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     stateSaved: "Status gespeichert!",
     stateLoaded: "Status geladen!",
     noSavedState: "Kein gespeicherter Status.",
-    soundSettings: "Sound-Einstellungen"
+    soundSettings: "Sound-Einstellungen",
+    clearPrompt: "Löschen",
+    exportPrompt: "Exportieren",
+    promptExported: "Exportiert!",
+    promptCleared: "Gelöscht!"
   },
   [Language.RUSSIAN]: {
     title: "Доктор Игра",
@@ -497,6 +521,10 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     stateSaved: "Сохранено!",
     stateLoaded: "Загружено!",
     noSavedState: "Нет сохранения.",
-    soundSettings: "Настройки звука"
+    soundSettings: "Настройки звука",
+    clearPrompt: "Очистить",
+    exportPrompt: "Экспорт",
+    promptExported: "Скачано!",
+    promptCleared: "Очищено!"
   }
 };

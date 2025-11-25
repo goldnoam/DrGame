@@ -19,54 +19,25 @@ export const generateGameCode = async (prompt: string, genre: string): Promise<G
 
   const ai = new GoogleGenAI({ apiKey });
 
+  // Simplified prompt structure to ensure model adherence
   const fullPrompt = `
+    Role: You are an expert game developer.
+    Task: Create a single-file HTML5 game based on the user's description.
     Genre: ${genre}
-    User Description: "${prompt}"
+    Description: "${prompt}"
     
-    Requirements:
-    1.  Output MUST be a valid HTML string containing all necessary CSS (in <style>) and JavaScript (in <script>).
-    2.  Do NOT use external CSS or JS files unless they are common CDNs. Prefer vanilla JS and Canvas API.
-    3.  The game must be fully playable with keyboard or mouse controls.
-    4.  Style the game to look polished and modern.
-    5.  Include a "Restart" button logic if the game ends.
-    6.  MANDATORY PAUSE FEATURE:
-        - Toggle pause with 'P' key.
-        - Visual "Pause" button in top UI.
-        - "PAUSED" overlay.
-    7.  Synthetic Sound Effects using Web Audio API (OscillatorNode). No external audio files.
-    8.  EXPOSE CONFIGURATION (MANDATORY for Level Editor):
-        - Define a global object \`window.GAME_CONFIG\` at the VERY TOP of your script.
-        - Put ALL tweakable values here: player speed, colors (hex), gravity, enemy count/speed, AND the LEVEL DATA (array/grid) if applicable.
-        - Define \`window.initGame()\` function that uses \`window.GAME_CONFIG\` to start/restart the game.
-        - INCLUDE SOUND SETTINGS:
-          - \`soundVolume\` (number 0.0 to 1.0)
-          - \`soundEnabled\` (boolean)
-          - \`soundType\` (string: 'sine', 'square', 'sawtooth', 'triangle')
-    9.  MOBILE SUPPORT (MANDATORY):
-        - Add touch event listeners (touchstart, touchend) for controls.
-        - If the game uses keys (WASD/Arrows), render on-screen virtual buttons for mobile users.
-        - Prevent default touch actions (scrolling/zooming) on the game canvas.
-    10. If the request is unsafe, generate a simple "Pong" game.
-
-    OUTPUT FORMAT INSTRUCTIONS:
-    You must output two distinct sections.
+    Technical Requirements:
+    1. Output complete HTML with embedded CSS and JS.
+    2. Use Canvas API. No external assets.
+    3. Mobile-friendly: Add touch controls/buttons.
+    4. Implement a 'P' key pause and a Pause UI overlay.
+    5. Use Web Audio API for sound effects.
+    6. Define window.GAME_CONFIG at the top with tweakable variables (speed, colors, sound settings).
+    7. Define window.initGame() to start/restart.
     
-    SECTION 1: THE GAME CODE
-    Wrap the complete HTML code (including <style> and <script>) inside these delimiters:
-    <<<HTML_START>>>
-    ... your html code ...
-    <<<HTML_END>>>
-
-    SECTION 2: THE CONTROLS JSON
-    Wrap the controls metadata JSON inside these delimiters:
-    <<<JSON_START>>>
-    [
-      { "icon": "arrows", "label": "Move" },
-      { "icon": "space", "label": "Jump" }
-    ]
-    <<<JSON_END>>>
-    
-    Do NOT output any other text before or after these blocks.
+    Output Format:
+    - Put HTML code between <<<HTML_START>>> and <<<HTML_END>>>
+    - Put Controls JSON between <<<JSON_START>>> and <<<JSON_END>>> (e.g., [{"icon":"arrows","label":"Move"}])
   `;
 
   let lastError: any;
@@ -77,10 +48,10 @@ export const generateGameCode = async (prompt: string, genre: string): Promise<G
         model: 'gemini-2.5-flash',
         contents: fullPrompt,
         config: {
-          systemInstruction: 'You are "Dr. Game", an expert game developer. You write clean, bug-free, single-file HTML5 code.',
+          systemInstruction: 'You are a coding expert. Always output valid HTML within the specified delimiters.',
           maxOutputTokens: 8192,
-          temperature: 0.6, 
-          // Removed responseMimeType: 'application/json' to allow robust text blocks
+          temperature: 0.7, // Slightly higher temp for creativity, but not too high
+          // Use permissive safety settings to prevent "EMPTY_RESPONSE" on benign game violence (e.g. shooting)
           safetySettings: [
             { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
             { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
@@ -113,10 +84,14 @@ export const generateGameCode = async (prompt: string, genre: string): Promise<G
       if (htmlMatch && htmlMatch[1]) {
           html = htmlMatch[1].trim();
       } else {
-          // Fallback regex for standard HTML block if delimiters missed
+          // Fallback regex for standard HTML block if delimiters missed or model ignored instructions
           const fallbackHtml = text.match(/<!DOCTYPE html>[\s\S]*?<\/html>/i) || text.match(/<html[\s\S]*?<\/html>/i);
           if (fallbackHtml) {
              html = fallbackHtml[0];
+          } else {
+             // Second fallback: check for markdown code blocks
+             const mdMatch = text.match(/```html([\s\S]*?)```/);
+             if (mdMatch) html = mdMatch[1].trim();
           }
       }
 
@@ -132,7 +107,9 @@ export const generateGameCode = async (prompt: string, genre: string): Promise<G
       }
 
       if (!html) {
-         throw new Error("INVALID_FORMAT"); // Generated text didn't contain valid code block
+         // If we still have no HTML, log the raw text to see what happened (for debugging)
+         console.warn("Failed to extract HTML. Raw response:", text.substring(0, 200) + "...");
+         throw new Error("INVALID_FORMAT"); 
       }
 
       return { html, controls };

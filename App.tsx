@@ -1,6 +1,6 @@
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Upload, Sparkles, Loader2, Gamepad2, History, Eye } from 'lucide-react';
+import { Upload, Sparkles, Loader2, Gamepad2, History, Eye, Trash2, Download, Copy, Check } from 'lucide-react';
 import { TRANSLATIONS } from './constants';
 import { Language, GameGenre, GameHistoryItem, GameControl } from './types';
 import LanguageSelector from './components/LanguageSelector';
@@ -15,9 +15,15 @@ const App: React.FC = () => {
   const [prompt, setPrompt] = useState('');
   const [genre, setGenre] = useState<GameGenre>(GameGenre.ANY);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  
+  // Prompt UI Feedback States
+  const [promptCopied, setPromptCopied] = useState(false);
+  const [promptExported, setPromptExported] = useState(false);
+  const [promptCleared, setPromptCleared] = useState(false);
   
   // Current Active Game State
   const [activeGame, setActiveGame] = useState<{
@@ -60,6 +66,25 @@ const App: React.FC = () => {
 
     return () => clearInterval(intervalId);
   }, []);
+
+  // Simulate progress when loading
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+    if (isLoading) {
+      setLoadingProgress(0);
+      interval = setInterval(() => {
+        setLoadingProgress(prev => {
+          if (prev >= 95) return prev;
+          // Slower increment as it gets higher
+          const increment = Math.max(0.5, (95 - prev) / 20);
+          return prev + Math.random() * increment;
+        });
+      }, 500);
+    } else {
+      setLoadingProgress(100);
+    }
+    return () => clearInterval(interval);
+  }, [isLoading]);
 
   // Load history from local storage on mount
   useEffect(() => {
@@ -214,6 +239,47 @@ const App: React.FC = () => {
     });
   };
 
+  // --- Prompt Management Handlers ---
+
+  const handleClearPrompt = () => {
+    if (prompt.trim() && window.confirm("Are you sure you want to clear the prompt?")) {
+      setPrompt('');
+      setPromptCleared(true);
+      setTimeout(() => setPromptCleared(false), 2000);
+    } else if (!prompt.trim()) {
+      setPrompt('');
+    }
+  };
+
+  const handleCopyPrompt = () => {
+    if (!prompt.trim()) return;
+    navigator.clipboard.writeText(prompt)
+      .then(() => {
+        setPromptCopied(true);
+        setTimeout(() => setPromptCopied(false), 2000);
+      })
+      .catch(console.error);
+  };
+
+  const handleExportPrompt = () => {
+    if (!prompt.trim()) return;
+    try {
+      const blob = new Blob([prompt], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `dr-game-prompt-${Date.now()}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setPromptExported(true);
+      setTimeout(() => setPromptExported(false), 2000);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const onDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragOver(true);
@@ -293,19 +359,57 @@ const App: React.FC = () => {
             <div className="bg-surface rounded-xl p-6 relative overflow-hidden">
               
               {/* Controls Header within box */}
-              <div className="flex justify-between items-center mb-4">
-                 <div className="text-xs text-slate-500 font-mono tracking-wide uppercase">AI Game Generator</div>
-                 <div className="flex items-center gap-2">
-                    <label className="text-sm text-slate-400">{t.genreLabel}:</label>
-                    <select 
-                      value={genre}
-                      onChange={(e) => setGenre(e.target.value as GameGenre)}
-                      className="bg-slate-800 border border-slate-700 text-slate-200 rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-primary outline-none hover:bg-slate-700 transition-colors cursor-pointer"
-                    >
-                      {Object.values(GameGenre).map(g => (
-                        <option key={g} value={g}>{t.genres[g]}</option>
-                      ))}
-                    </select>
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
+                 
+                 {/* Left: Label (Hidden on small mobile if needed, but useful context) */}
+                 <div className="text-xs text-slate-500 font-mono tracking-wide uppercase hidden sm:block">AI Game Generator</div>
+                 
+                 {/* Right: Tools & Genre */}
+                 <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-3">
+                    
+                    {/* Prompt Tools */}
+                    <div className="flex items-center gap-1 bg-slate-800/80 rounded-lg p-1 border border-slate-700/50">
+                       <button 
+                         onClick={handleCopyPrompt} 
+                         disabled={!prompt.trim()}
+                         className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-700 rounded transition-colors relative"
+                         title={t.copyPrompt}
+                       >
+                         {promptCopied ? <Check size={14} className="text-green-400"/> : <Copy size={14}/>}
+                       </button>
+                       <button 
+                         onClick={handleExportPrompt} 
+                         disabled={!prompt.trim()}
+                         className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-700 rounded transition-colors relative"
+                         title={t.exportPrompt}
+                       >
+                         {promptExported ? <Check size={14} className="text-green-400"/> : <Download size={14}/>}
+                       </button>
+                       <button 
+                         onClick={handleClearPrompt} 
+                         disabled={!prompt.trim()}
+                         className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-slate-700 rounded transition-colors relative"
+                         title={t.clearPrompt}
+                       >
+                         {promptCleared ? <Check size={14} className="text-green-400"/> : <Trash2 size={14}/>}
+                       </button>
+                    </div>
+
+                    <div className="h-4 w-px bg-slate-700 hidden sm:block"></div>
+
+                    {/* Genre Select */}
+                    <div className="flex items-center gap-2">
+                      <label className="text-sm text-slate-400 hidden sm:block">{t.genreLabel}:</label>
+                      <select 
+                        value={genre}
+                        onChange={(e) => setGenre(e.target.value as GameGenre)}
+                        className="bg-slate-800 border border-slate-700 text-slate-200 rounded-md px-2 py-1 text-sm focus:ring-1 focus:ring-primary outline-none hover:bg-slate-700 transition-colors cursor-pointer"
+                      >
+                        {Object.values(GameGenre).map(g => (
+                          <option key={g} value={g}>{t.genres[g]}</option>
+                        ))}
+                      </select>
+                    </div>
                  </div>
               </div>
 
@@ -316,59 +420,72 @@ const App: React.FC = () => {
                 className="w-full h-40 bg-transparent border-none resize-none focus:ring-0 text-slate-100 placeholder-slate-500 text-lg leading-relaxed scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent"
               />
               
-              <div className="mt-4 flex flex-col md:flex-row items-center justify-between gap-4 border-t border-slate-700/50 pt-4">
-                <div className="relative">
-                  <input
-                    type="file"
-                    id="file-upload"
-                    className="hidden"
-                    onChange={handleFileChange}
-                    accept=".txt,.md,.json,text/*"
-                  />
-                  <label
-                    htmlFor="file-upload"
-                    className="cursor-pointer flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm"
-                  >
-                    <Upload size={16} />
-                    <span>{t.dragDrop} <span className="text-slate-600 px-1">{t.or}</span> <span className="underline decoration-slate-600 hover:decoration-white underline-offset-2">Click to upload</span></span>
-                  </label>
+              <div className="mt-4 flex flex-col items-center gap-4 border-t border-slate-700/50 pt-4">
+                
+                <div className="w-full flex flex-col md:flex-row items-center justify-between gap-4">
+                  <div className="relative">
+                    <input
+                      type="file"
+                      id="file-upload"
+                      className="hidden"
+                      onChange={handleFileChange}
+                      accept=".txt,.md,.json,text/*"
+                    />
+                    <label
+                      htmlFor="file-upload"
+                      className="cursor-pointer flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm"
+                    >
+                      <Upload size={16} />
+                      <span>{t.dragDrop} <span className="text-slate-600 px-1">{t.or}</span> <span className="underline decoration-slate-600 hover:decoration-white underline-offset-2">Click to upload</span></span>
+                    </label>
+                  </div>
+
+                  <div className="flex gap-2 w-full md:w-auto">
+                    <button
+                      onClick={handlePreview}
+                      disabled={isLoading || isPreviewLoading || !prompt.trim()}
+                      className="w-full md:w-48 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed border border-slate-700"
+                    >
+                      {isPreviewLoading ? <Loader2 className="animate-spin" size={20} /> : <Eye size={20} />}
+                      <span className="hidden sm:inline">{t.previewBtn}</span>
+                      <span className="sm:hidden">Preview</span>
+                    </button>
+
+                    <button
+                      onClick={handleGenerate}
+                      disabled={isLoading || !prompt.trim()}
+                      className={`
+                        w-full md:w-48 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-bold text-white shadow-lg transition-all
+                        ${isLoading || !prompt.trim() 
+                          ? 'bg-slate-700 cursor-not-allowed opacity-50' 
+                          : 'bg-gradient-to-r from-primary to-secondary hover:shadow-primary/25 hover:scale-105 active:scale-95'
+                        }
+                      `}
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="animate-spin" size={20} />
+                          {t.generating}
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles size={20} />
+                          {t.generateBtn}
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
 
-                <div className="flex gap-2 w-full md:w-auto">
-                  <button
-                    onClick={handlePreview}
-                    disabled={isLoading || isPreviewLoading || !prompt.trim()}
-                    className="w-full md:w-48 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed border border-slate-700"
-                  >
-                    {isPreviewLoading ? <Loader2 className="animate-spin" size={20} /> : <Eye size={20} />}
-                    <span className="hidden sm:inline">{t.previewBtn}</span>
-                    <span className="sm:hidden">Preview</span>
-                  </button>
-
-                  <button
-                    onClick={handleGenerate}
-                    disabled={isLoading || !prompt.trim()}
-                    className={`
-                      w-full md:w-48 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-bold text-white shadow-lg transition-all
-                      ${isLoading || !prompt.trim() 
-                        ? 'bg-slate-700 cursor-not-allowed opacity-50' 
-                        : 'bg-gradient-to-r from-primary to-secondary hover:shadow-primary/25 hover:scale-105 active:scale-95'
-                      }
-                    `}
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="animate-spin" size={20} />
-                        {t.generating}
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles size={20} />
-                        {t.generateBtn}
-                      </>
-                    )}
-                  </button>
-                </div>
+                {/* Simulated Progress Bar */}
+                {isLoading && (
+                  <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden border border-slate-700/50 animate-in fade-in">
+                    <div 
+                      className="bg-gradient-to-r from-primary to-secondary h-full transition-all duration-300 ease-out shadow-[0_0_10px_rgba(99,102,241,0.5)]"
+                      style={{ width: `${loadingProgress}%` }}
+                    />
+                  </div>
+                )}
               </div>
             </div>
             
