@@ -294,8 +294,8 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
   }, []);
 
   const renderControlIcon = (control: GameControl) => {
-    // Enhanced hover effects with glowing shadow, scale, and pulse
-    const baseClasses = "transition-all duration-300 group-hover:scale-110 group-hover:drop-shadow-[0_0_15px_rgba(99,102,241,0.8)] group-hover:animate-pulse";
+    // Gentle glow and scale animation without opacity pulse for better readability
+    const baseClasses = "transition-all duration-300 group-hover:scale-110 group-hover:drop-shadow-[0_0_12px_rgba(99,102,241,0.7)]";
     
     switch (control.icon) {
       case 'wasd':
