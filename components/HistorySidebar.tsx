@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Play, Trash2, Clock, FileText, Copy, Check, Star } from 'lucide-react';
+import { X, Play, Trash2, Clock, FileText, Copy, Check, Star, AlertTriangle } from 'lucide-react';
 import { Translation, GameHistoryItem } from '../types';
 
 interface HistorySidebarProps {
@@ -22,6 +22,7 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
   isRTL
 }) => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -76,8 +77,9 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
               history.map((item) => (
                 <div 
                   key={item.id}
-                  className="bg-slate-800 rounded-lg p-4 border border-slate-700 hover:border-primary/50 transition-all group"
+                  className="bg-slate-800 rounded-lg p-4 border border-slate-700 hover:border-primary/50 transition-all group relative overflow-hidden"
                 >
+                  {/* Item Content */}
                   <div className="flex justify-between items-start mb-2">
                     <span className="text-xs font-mono text-secondary px-2 py-0.5 bg-secondary/10 rounded">
                       {t.genres[item.genre]}
@@ -106,35 +108,66 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                     )}
                   </div>
 
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => onSelectGame(item)}
-                      className="flex-1 flex items-center justify-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary text-sm py-2 rounded transition-colors font-semibold"
-                    >
-                      <Play size={16} />
-                      {t.play}
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleCopy(item.prompt, item.id);
-                      }}
-                      className="p-2 text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 rounded transition-colors"
-                      title={copiedId === item.id ? t.copied : t.copyPrompt}
-                    >
-                       {copiedId === item.id ? <Check size={16} /> : <Copy size={16} />}
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDeleteGame(item.id);
-                      }}
-                      className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded transition-colors"
-                      title={t.delete}
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
+                  {/* Actions / Confirmation */}
+                  {deleteConfirmId === item.id ? (
+                    <div className="flex items-center justify-between bg-red-900/20 p-2 rounded border border-red-500/30 animate-in fade-in slide-in-from-bottom-2">
+                      <div className="flex items-center text-xs text-red-200 font-medium">
+                         <AlertTriangle size={14} className="mr-1.5" />
+                         {t.confirmDelete}
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteGame(item.id);
+                            setDeleteConfirmId(null);
+                          }}
+                          className="px-2 py-1 bg-red-600 hover:bg-red-500 text-white text-xs rounded transition-colors"
+                        >
+                          {t.delete}
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteConfirmId(null);
+                          }}
+                          className="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs rounded transition-colors"
+                        >
+                          {t.cancel}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => onSelectGame(item)}
+                        className="flex-1 flex items-center justify-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary text-sm py-2 rounded transition-colors font-semibold"
+                      >
+                        <Play size={16} />
+                        {t.play}
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCopy(item.prompt, item.id);
+                        }}
+                        className="p-2 text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 rounded transition-colors"
+                        title={copiedId === item.id ? t.copied : t.copyPrompt}
+                      >
+                         {copiedId === item.id ? <Check size={16} /> : <Copy size={16} />}
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteConfirmId(item.id);
+                        }}
+                        className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded transition-colors"
+                        title={t.delete}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))
             )}

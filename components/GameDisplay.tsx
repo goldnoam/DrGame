@@ -14,6 +14,23 @@ interface GameDisplayProps {
   isRTL: boolean;
 }
 
+// Helper component for keyboard keys
+interface KeyCapProps {
+  children?: React.ReactNode;
+  className?: string;
+}
+
+const KeyCap: React.FC<KeyCapProps> = ({ children, className = "" }) => (
+  <div className={`
+    flex items-center justify-center 
+    bg-slate-700 border-t border-x border-slate-600 border-b-4 border-b-slate-900 
+    rounded-md text-slate-100 font-mono font-bold shadow-lg select-none
+    ${className}
+  `}>
+    {children}
+  </div>
+);
+
 const GameDisplay: React.FC<GameDisplayProps> = ({ 
   code, 
   prompt, 
@@ -105,38 +122,46 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
     switch (control.icon) {
       case 'wasd':
         return (
-          <div className="flex gap-1">
-             <div className="flex flex-col items-center gap-1">
-                <div className="w-6 h-6 border border-slate-500 rounded bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-300">W</div>
-                <div className="flex gap-1">
-                  <div className="w-6 h-6 border border-slate-500 rounded bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-300">A</div>
-                  <div className="w-6 h-6 border border-slate-500 rounded bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-300">S</div>
-                  <div className="w-6 h-6 border border-slate-500 rounded bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-300">D</div>
-                </div>
+          <div className="flex flex-col items-center gap-1.5 p-1">
+             <KeyCap className="w-8 h-8 text-sm">W</KeyCap>
+             <div className="flex gap-1.5">
+               <KeyCap className="w-8 h-8 text-sm">A</KeyCap>
+               <KeyCap className="w-8 h-8 text-sm">S</KeyCap>
+               <KeyCap className="w-8 h-8 text-sm">D</KeyCap>
              </div>
           </div>
         );
       case 'arrows':
         return (
-          <div className="flex gap-1">
-             <div className="flex flex-col items-center gap-1">
-                <div className="w-6 h-6 border border-slate-500 rounded bg-slate-800 flex items-center justify-center text-slate-300"><ArrowUp size={14} /></div>
-                <div className="flex gap-1">
-                  <div className="w-6 h-6 border border-slate-500 rounded bg-slate-800 flex items-center justify-center text-slate-300"><ArrowUp size={14} className="-rotate-90" /></div>
-                  <div className="w-6 h-6 border border-slate-500 rounded bg-slate-800 flex items-center justify-center text-slate-300"><ArrowUp size={14} className="rotate-180" /></div>
-                  <div className="w-6 h-6 border border-slate-500 rounded bg-slate-800 flex items-center justify-center text-slate-300"><ArrowUp size={14} className="rotate-90" /></div>
-                </div>
+          <div className="flex flex-col items-center gap-1.5 p-1">
+             <KeyCap className="w-8 h-8"><ArrowUp size={16} /></KeyCap>
+             <div className="flex gap-1.5">
+               <KeyCap className="w-8 h-8"><ArrowUp size={16} className="-rotate-90" /></KeyCap>
+               <KeyCap className="w-8 h-8"><ArrowUp size={16} className="rotate-180" /></KeyCap>
+               <KeyCap className="w-8 h-8"><ArrowUp size={16} className="rotate-90" /></KeyCap>
              </div>
           </div>
         );
       case 'space':
-        return <div className="h-6 w-20 border border-slate-500 rounded bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-300 uppercase">{t.controlIcons.space}</div>;
+        return <KeyCap className="h-8 w-24 text-xs uppercase tracking-wider">{t.controlIcons.space}</KeyCap>;
       case 'mouse':
-        return <MousePointer2 size={24} className="text-slate-300" />;
+        return (
+          <div className="w-12 h-12 flex items-center justify-center bg-slate-800 rounded-xl border border-slate-600 shadow-md">
+             <MousePointer2 size={24} className="text-primary animate-pulse" />
+          </div>
+        );
       case 'click':
-        return <MousePointerClick size={24} className="text-slate-300" />;
+        return (
+          <div className="w-12 h-12 flex items-center justify-center bg-slate-800 rounded-xl border border-slate-600 shadow-md relative">
+             <MousePointerClick size={24} className="text-secondary" />
+             <span className="absolute -top-1 -right-1 flex h-3 w-3">
+               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
+               <span className="relative inline-flex rounded-full h-3 w-3 bg-secondary"></span>
+             </span>
+          </div>
+        );
       default:
-        return <div className="h-6 min-w-[24px] px-2 border border-slate-500 rounded bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-300 uppercase">{control.keyName || "?"}</div>;
+        return <KeyCap className="h-8 min-w-[32px] px-2 text-xs uppercase">{control.keyName || "?"}</KeyCap>;
     }
   };
 
@@ -221,18 +246,18 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
 
         {/* Controls Overlay */}
         {showControls && controls.length > 0 && (
-          <div className={`absolute top-20 ${isRTL ? 'left-4' : 'right-4'} z-10 w-64 bg-black/80 backdrop-blur-md border border-white/10 rounded-lg p-4 shadow-xl animate-in fade-in slide-in-from-right-4`}>
-             <h3 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
+          <div className={`absolute top-20 ${isRTL ? 'left-4' : 'right-4'} z-10 w-72 bg-black/60 backdrop-blur-md border border-white/10 rounded-xl p-4 shadow-2xl animate-in fade-in slide-in-from-right-4`}>
+             <h3 className="text-white font-bold text-sm mb-4 flex items-center gap-2 border-b border-white/10 pb-2">
                <Gamepad2 size={16} className="text-primary" />
                {t.controls}
              </h3>
-             <div className="space-y-3">
+             <div className="space-y-4">
                {controls.map((control, idx) => (
-                 <div key={idx} className="flex items-center justify-between gap-3 text-sm">
-                    <div className="flex-shrink-0">
+                 <div key={idx} className="flex items-center justify-between gap-4">
+                    <div className="flex-shrink-0 flex items-center justify-center min-w-[60px]">
                       {renderControlIcon(control)}
                     </div>
-                    <span className="text-slate-300 font-medium text-right flex-1">{control.label}</span>
+                    <span className="text-slate-200 font-medium text-sm text-right flex-1 leading-tight">{control.label}</span>
                  </div>
                ))}
              </div>

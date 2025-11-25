@@ -66,6 +66,8 @@ export interface Translation {
   historyEmpty: string;
   play: string;
   delete: string;
+  confirmDelete: string;
+  cancel: string;
   openHistory: string;
   copyPrompt: string;
   copied: string;
