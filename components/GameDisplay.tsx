@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, Maximize2, Minimize2, Share2, Check, Star, Gamepad2, MousePointer2, MousePointerClick, ArrowUp } from 'lucide-react';
+import { X, Maximize2, Minimize2, Share2, Check, Star, Gamepad2, MousePointer2, MousePointerClick, ArrowUp, Download } from 'lucide-react';
 import { Translation, GameControl } from '../types';
 
 interface GameDisplayProps {
@@ -46,6 +46,7 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const [showCopied, setShowCopied] = useState(false);
+  const [showDownloaded, setShowDownloaded] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [currentRating, setCurrentRating] = useState(initialRating);
   const [hoverRating, setHoverRating] = useState(0);
@@ -78,21 +79,56 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
     }
   };
 
+  const handleDownload = () => {
+    try {
+      const blob = new Blob([code], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `dr-game-${gameId || Date.now()}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      setShowDownloaded(true);
+      setTimeout(() => setShowDownloaded(false), 2000);
+    } catch (err) {
+      console.error('Download failed', err);
+    }
+  };
+
   const handleShare = async () => {
     const shareText = `Check out this game I created with Dr. Game AI!\n\nPrompt: ${prompt}`;
-    
-    if (navigator.share) {
+    const fileName = `dr-game-${gameId || Date.now()}.html`;
+    const blob = new Blob([code], { type: 'text/html' });
+    const file = new File([blob], fileName, { type: 'text/html' });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
       try {
+        await navigator.share({
+          files: [file],
+          title: 'Dr. Game Creation',
+          text: shareText,
+        });
+        return;
+      } catch (err) {
+        console.log('File share cancelled or failed', err);
+        // Fallback to text sharing below
+      }
+    } else if (navigator.share) {
+       try {
         await navigator.share({
           title: 'Dr. Game Creation',
           text: shareText,
         });
         return;
       } catch (err) {
-        console.log('Share cancelled or failed', err);
+        console.log('Text share cancelled or failed', err);
       }
     }
 
+    // Fallback: Clipboard and Twitter
     try {
       await navigator.clipboard.writeText(shareText);
       setShowCopied(true);
@@ -211,6 +247,19 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
               title={t.controls}
             >
               <Gamepad2 size={20} />
+            </button>
+
+             <button
+              onClick={handleDownload}
+              className="group relative p-2 text-white/80 hover:text-white bg-black/40 hover:bg-black/60 rounded-full backdrop-blur-sm transition-all"
+              title={t.download}
+            >
+              {showDownloaded ? <Check size={20} className="text-green-400" /> : <Download size={20} />}
+              {showDownloaded && (
+                <div className="absolute top-full right-0 mt-2 px-2 py-1 bg-black/80 text-white text-xs rounded whitespace-nowrap">
+                  {t.downloadSuccess}
+                </div>
+              )}
             </button>
 
             <button

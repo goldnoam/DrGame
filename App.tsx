@@ -132,11 +132,13 @@ const App: React.FC = () => {
       setHistory(prev => [newItem, ...prev]);
 
     } catch (err: any) {
-      console.error(err);
+      console.error("Generation error:", err);
       if (err.message === 'SAFETY_ERROR') {
         setError(t.errorSafety);
       } else if (err.message === 'API_KEY_MISSING') {
         setError(t.errorApiKey);
+      } else if (err.message === 'EMPTY_RESPONSE' || err.message === 'FAILED_AFTER_RETRIES') {
+        setError("The server is busy or returned an empty response. Please try again.");
       } else {
         setError(t.error);
       }
@@ -316,7 +318,7 @@ const App: React.FC = () => {
                   <button
                     onClick={handlePreview}
                     disabled={isLoading || isPreviewLoading || !prompt.trim()}
-                    className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed border border-slate-700 min-w-[160px]"
+                    className="w-full md:w-48 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed border border-slate-700"
                   >
                     {isPreviewLoading ? <Loader2 className="animate-spin" size={20} /> : <Eye size={20} />}
                     <span className="hidden sm:inline">{t.previewBtn}</span>
@@ -327,7 +329,7 @@ const App: React.FC = () => {
                     onClick={handleGenerate}
                     disabled={isLoading || !prompt.trim()}
                     className={`
-                      flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-bold text-white shadow-lg transition-all min-w-[160px]
+                      w-full md:w-48 flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-bold text-white shadow-lg transition-all
                       ${isLoading || !prompt.trim() 
                         ? 'bg-slate-700 cursor-not-allowed opacity-50' 
                         : 'bg-gradient-to-r from-primary to-secondary hover:shadow-primary/25 hover:scale-105 active:scale-95'

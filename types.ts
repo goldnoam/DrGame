@@ -80,6 +80,8 @@ export interface Translation {
     click: string;
     space: string;
   };
+  download: string;
+  downloadSuccess: string;
 }
 
 export interface GameGenerationResponse {

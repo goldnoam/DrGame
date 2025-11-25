@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Play, Trash2, Clock, FileText, Copy, Check, Star, AlertTriangle } from 'lucide-react';
+import { X, Play, Trash2, Clock, FileText, Copy, Check, Star, AlertCircle } from 'lucide-react';
 import { Translation, GameHistoryItem } from '../types';
 
 interface HistorySidebarProps {
@@ -112,7 +112,7 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                   {deleteConfirmId === item.id ? (
                     <div className="flex items-center justify-between bg-red-900/20 p-2 rounded border border-red-500/30 animate-in fade-in slide-in-from-bottom-2">
                       <div className="flex items-center text-xs text-red-200 font-medium">
-                         <AlertTriangle size={14} className="mr-1.5" />
+                         <AlertCircle size={14} className="mr-1.5" />
                          {t.confirmDelete}
                       </div>
                       <div className="flex gap-2">

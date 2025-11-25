@@ -35,8 +35,8 @@ export const TRANSLATIONS: Record<Language, Translation> = {
       [GameGenre.SIMULATION]: "Simulation",
       [GameGenre.SPORTS]: "Sports",
     },
-    share: "Share Prompt",
-    shareSuccess: "Prompt copied to clipboard!",
+    share: "Share Game/Prompt",
+    shareSuccess: "Copied to clipboard!",
     historyTitle: "Game History",
     historyEmpty: "No games created yet. Start building!",
     play: "Play",
@@ -54,7 +54,9 @@ export const TRANSLATIONS: Record<Language, Translation> = {
       mouse: "Mouse Move",
       click: "Left Click",
       space: "Spacebar"
-    }
+    },
+    download: "Download Game",
+    downloadSuccess: "Download started"
   },
   [Language.HEBREW]: {
     title: "ד\"ר גיים",
@@ -90,8 +92,8 @@ export const TRANSLATIONS: Record<Language, Translation> = {
       [GameGenre.SIMULATION]: "סימולציה",
       [GameGenre.SPORTS]: "ספורט",
     },
-    share: "שתף הנחיה",
-    shareSuccess: "ההנחיה הועתקה ללוח!",
+    share: "שתף משחק/הנחיה",
+    shareSuccess: "הועתק ללוח!",
     historyTitle: "היסטוריית משחקים",
     historyEmpty: "לא נוצרו משחקים עדיין. התחל לבנות!",
     play: "שחק",
@@ -109,7 +111,9 @@ export const TRANSLATIONS: Record<Language, Translation> = {
       mouse: "הזזת עכבר",
       click: "קליק שמאלי",
       space: "רווח"
-    }
+    },
+    download: "הורד משחק",
+    downloadSuccess: "ההורדה החלה"
   },
   [Language.CHINESE]: {
     title: "游戏博士",
@@ -145,8 +149,8 @@ export const TRANSLATIONS: Record<Language, Translation> = {
       [GameGenre.SIMULATION]: "模拟",
       [GameGenre.SPORTS]: "体育",
     },
-    share: "分享提示词",
-    shareSuccess: "提示词已复制！",
+    share: "分享游戏/提示词",
+    shareSuccess: "已复制！",
     historyTitle: "游戏历史",
     historyEmpty: "尚未创建游戏。开始构建吧！",
     play: "玩",
@@ -164,7 +168,9 @@ export const TRANSLATIONS: Record<Language, Translation> = {
       mouse: "鼠标移动",
       click: "左键点击",
       space: "空格键"
-    }
+    },
+    download: "下载游戏",
+    downloadSuccess: "下载开始"
   },
   [Language.HINDI]: {
     title: "Dr. Game",
@@ -200,8 +206,8 @@ export const TRANSLATIONS: Record<Language, Translation> = {
       [GameGenre.SIMULATION]: "सिमुलेशन",
       [GameGenre.SPORTS]: "खेल",
     },
-    share: "प्रॉम्प्ट साझा करें",
-    shareSuccess: "प्रॉम्प्ट क्लिपबोर्ड पर कॉपी किया गया!",
+    share: "गेम साझा करें",
+    shareSuccess: "कॉपी किया गया!",
     historyTitle: "गेम इतिहास",
     historyEmpty: "अभी तक कोई गेम नहीं बनाया गया। निर्माण शुरू करें!",
     play: "खेलें",
@@ -219,7 +225,9 @@ export const TRANSLATIONS: Record<Language, Translation> = {
       mouse: "माउस मूव",
       click: "लेफ्ट क्लिक",
       space: "स्पेसबार"
-    }
+    },
+    download: "गेम डाउनलोड करें",
+    downloadSuccess: "डाउनलोड शुरू"
   },
   [Language.FRENCH]: {
     title: "Dr. Game",
@@ -255,8 +263,8 @@ export const TRANSLATIONS: Record<Language, Translation> = {
       [GameGenre.SIMULATION]: "Simulation",
       [GameGenre.SPORTS]: "Sports",
     },
-    share: "Partager l'invite",
-    shareSuccess: "Invite copiée dans le presse-papiers !",
+    share: "Partager",
+    shareSuccess: "Copié !",
     historyTitle: "Historique des jeux",
     historyEmpty: "Aucun jeu créé pour le moment. Commencez à construire !",
     play: "Jouer",
@@ -274,7 +282,9 @@ export const TRANSLATIONS: Record<Language, Translation> = {
       mouse: "Souris",
       click: "Clic Gauche",
       space: "Espace"
-    }
+    },
+    download: "Télécharger",
+    downloadSuccess: "Téléchargement lancé"
   },
   [Language.GERMAN]: {
     title: "Dr. Game",
@@ -310,8 +320,8 @@ export const TRANSLATIONS: Record<Language, Translation> = {
       [GameGenre.SIMULATION]: "Simulation",
       [GameGenre.SPORTS]: "Sport",
     },
-    share: "Prompt teilen",
-    shareSuccess: "Prompt in die Zwischenablage kopiert!",
+    share: "Teilen",
+    shareSuccess: "Kopiert!",
     historyTitle: "Spielverlauf",
     historyEmpty: "Noch keine Spiele erstellt. Fangen Sie an zu bauen!",
     play: "Spielen",
@@ -329,7 +339,9 @@ export const TRANSLATIONS: Record<Language, Translation> = {
       mouse: "Maus bewegen",
       click: "Linksklick",
       space: "Leertaste"
-    }
+    },
+    download: "Spiel herunterladen",
+    downloadSuccess: "Download gestartet"
   },
   [Language.RUSSIAN]: {
     title: "Доктор Игра",
@@ -366,7 +378,7 @@ export const TRANSLATIONS: Record<Language, Translation> = {
       [GameGenre.SPORTS]: "Спорт",
     },
     share: "Поделиться",
-    shareSuccess: "Запрос скопирован в буфер обмена!",
+    shareSuccess: "Скопировано!",
     historyTitle: "История игр",
     historyEmpty: "Игры еще не созданы. Начните строить!",
     play: "Играть",
@@ -384,6 +396,8 @@ export const TRANSLATIONS: Record<Language, Translation> = {
       mouse: "Мышь",
       click: "ЛКМ",
       space: "Пробел"
-    }
+    },
+    download: "Скачать игру",
+    downloadSuccess: "Скачивание"
   }
 };
