@@ -133,12 +133,16 @@ const App: React.FC = () => {
 
     } catch (err: any) {
       console.error("Generation error:", err);
-      if (err.message === 'SAFETY_ERROR') {
+      const errorMessage = err.message || err.toString();
+
+      if (errorMessage === 'SAFETY_ERROR') {
         setError(t.errorSafety);
-      } else if (err.message === 'API_KEY_MISSING') {
+      } else if (errorMessage === 'API_KEY_MISSING') {
         setError(t.errorApiKey);
-      } else if (err.message === 'EMPTY_RESPONSE' || err.message === 'FAILED_AFTER_RETRIES') {
+      } else if (errorMessage === 'EMPTY_RESPONSE' || errorMessage === 'FAILED_AFTER_RETRIES') {
         setError("The server is busy or returned an empty response. Please try again.");
+      } else if (errorMessage.includes('xhr') || errorMessage.includes('fetch') || errorMessage.includes('500') || errorMessage.includes('Network')) {
+        setError("Network or Server Error. Please check your connection and try again.");
       } else {
         setError(t.error);
       }
@@ -146,6 +150,21 @@ const App: React.FC = () => {
       setIsLoading(false);
     }
   };
+
+  const handleUpdateGame = useCallback((id: string, newCode: string) => {
+    // Update history
+    setHistory(prev => prev.map(item => 
+      item.id === id ? { ...item, code: newCode } : item
+    ));
+
+    // Update active game if it's the one being edited
+    setActiveGame(prev => {
+      if (prev && prev.id === id) {
+        return { ...prev, code: newCode };
+      }
+      return prev;
+    });
+  }, []);
 
   const handleRateGame = (rating: number) => {
     if (!activeGame) return;
@@ -400,6 +419,7 @@ const App: React.FC = () => {
           rating={activeGame.rating}
           onClose={() => setActiveGame(null)} 
           onRate={handleRateGame}
+          onSave={handleUpdateGame}
           t={t}
           isRTL={isRTL}
         />

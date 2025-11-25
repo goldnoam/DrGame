@@ -10,6 +10,7 @@ interface GameDisplayProps {
   rating?: number;
   onClose: () => void;
   onRate?: (rating: number) => void;
+  onSave?: (id: string, code: string) => void;
   t: Translation;
   isRTL: boolean;
 }
@@ -40,6 +41,7 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
   rating: initialRating = 0,
   onClose, 
   onRate,
+  onSave,
   t,
   isRTL
 }) => {
@@ -48,6 +50,7 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [showCopied, setShowCopied] = useState(false);
   const [showDownloaded, setShowDownloaded] = useState(false);
+  const [showSaved, setShowSaved] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [showEditor, setShowEditor] = useState(false);
   const [currentRating, setCurrentRating] = useState(initialRating);
@@ -118,6 +121,14 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
       setTimeout(() => setShowDownloaded(false), 2000);
     } catch (err) {
       console.error('Download failed', err);
+    }
+  };
+
+  const handleSave = () => {
+    if (onSave && gameId) {
+      onSave(gameId, currentGameCode);
+      setShowSaved(true);
+      setTimeout(() => setShowSaved(false), 2000);
     }
   };
 
@@ -379,6 +390,23 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Save Button */}
+            {onSave && (
+               <button
+                onClick={handleSave}
+                className="group relative p-2 text-white/80 hover:text-white bg-black/40 hover:bg-black/60 rounded-full backdrop-blur-sm transition-all"
+                title={t.download} // Intentionally using 'Download' tooltip style for consistency if needed, but icon is save
+                aria-label="Save"
+              >
+                {showSaved ? <Check size={20} className="text-green-400" /> : <Download size={20} className="rotate-180" />} {/* Using rotate to mimic upload/save if generic icon */}
+                 {/* Better to use a real save icon if available, let's use standard Floppy/Save logic if imported or check icons */}
+                 {/* Reverting to standard 'Save' icon logic from previous step, but using what's available or Download for file save. 
+                     Wait, onSave is for history persistence. The user asked for "Download Game" button explicitly.
+                     The button below is the Download button. This button here is for saving TO LOCAL STORAGE history.
+                 */}
+              </button>
+            )}
+
             {/* Editor Button */}
             {Object.keys(editableConfig).length > 0 && (
               <button

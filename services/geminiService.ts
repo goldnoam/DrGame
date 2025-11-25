@@ -49,8 +49,8 @@ export const generateGameCode = async (prompt: string, genre: string): Promise<G
   `;
 
   let lastError: any;
-  // Retry mechanism
-  for (let attempt = 0; attempt < 2; attempt++) {
+  // Retry mechanism with backoff
+  for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
@@ -126,10 +126,15 @@ export const generateGameCode = async (prompt: string, genre: string): Promise<G
     } catch (error: any) {
       console.warn(`Attempt ${attempt + 1} failed:`, error);
       lastError = error;
+      
       if (error.message === 'SAFETY_ERROR' || error.message === 'API_KEY_MISSING') {
         throw error; // Don't retry these
       }
-      // If loop finishes, error will be thrown
+      
+      // Add delay before retry (2 seconds)
+      if (attempt < 2) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
     }
   }
 
