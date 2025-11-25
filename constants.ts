@@ -1,3 +1,4 @@
+
 import { Language, Translation, GameGenre } from './types';
 
 export const TRANSLATIONS: Record<Language, Translation> = {
@@ -60,7 +61,14 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     editGame: "Edit Level",
     editorTitle: "Level Editor",
     apply: "Apply Changes",
-    reset: "Reset"
+    reset: "Reset",
+    copyCode: "Copy Code",
+    codeCopied: "Code Copied!",
+    quickSave: "Quick Save State",
+    quickLoad: "Quick Load State",
+    stateSaved: "State Saved!",
+    stateLoaded: "State Loaded!",
+    noSavedState: "No saved state found."
   },
   [Language.HEBREW]: {
     title: "ד\"ר גיים",
@@ -121,7 +129,14 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     editGame: "ערוך שלב",
     editorTitle: "עורך שלבים",
     apply: "החל שינויים",
-    reset: "אפס"
+    reset: "אפס",
+    copyCode: "העתק קוד",
+    codeCopied: "הקוד הועתק!",
+    quickSave: "שמירה מהירה",
+    quickLoad: "טעינה מהירה",
+    stateSaved: "נשמר!",
+    stateLoaded: "נטען!",
+    noSavedState: "לא נמצאה שמירה."
   },
   [Language.CHINESE]: {
     title: "游戏博士",
@@ -182,7 +197,14 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     editGame: "编辑关卡",
     editorTitle: "关卡编辑器",
     apply: "应用更改",
-    reset: "重置"
+    reset: "重置",
+    copyCode: "复制代码",
+    codeCopied: "代码已复制！",
+    quickSave: "快速保存",
+    quickLoad: "快速加载",
+    stateSaved: "状态已保存！",
+    stateLoaded: "状态已加载！",
+    noSavedState: "未找到保存的状态。"
   },
   [Language.HINDI]: {
     title: "Dr. Game",
@@ -243,7 +265,14 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     editGame: "स्तर संपादित करें",
     editorTitle: "स्तर संपादक",
     apply: "परिवर्तन लागू करें",
-    reset: "रीसेट"
+    reset: "रीसेट",
+    copyCode: "कोड कॉपी करें",
+    codeCopied: "कोड कॉपी किया गया!",
+    quickSave: "त्वरित सहेजें",
+    quickLoad: "त्वरित लोड",
+    stateSaved: "राज्य सहेजा गया!",
+    stateLoaded: "राज्य लोड किया गया!",
+    noSavedState: "कोई सहेजा गया राज्य नहीं मिला।"
   },
   [Language.FRENCH]: {
     title: "Dr. Game",
@@ -304,7 +333,14 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     editGame: "Éditer le niveau",
     editorTitle: "Éditeur de niveau",
     apply: "Appliquer",
-    reset: "Réinitialiser"
+    reset: "Réinitialiser",
+    copyCode: "Copier le code",
+    codeCopied: "Code copié !",
+    quickSave: "Sauvegarde rapide",
+    quickLoad: "Chargement rapide",
+    stateSaved: "État sauvegardé !",
+    stateLoaded: "État chargé !",
+    noSavedState: "Aucun état sauvegardé."
   },
   [Language.GERMAN]: {
     title: "Dr. Game",
@@ -365,7 +401,14 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     editGame: "Level bearbeiten",
     editorTitle: "Level-Editor",
     apply: "Änderungen anwenden",
-    reset: "Zurücksetzen"
+    reset: "Zurücksetzen",
+    copyCode: "Code kopieren",
+    codeCopied: "Code kopiert!",
+    quickSave: "Schnellspeichern",
+    quickLoad: "Schnellladen",
+    stateSaved: "Status gespeichert!",
+    stateLoaded: "Status geladen!",
+    noSavedState: "Kein gespeicherter Status."
   },
   [Language.RUSSIAN]: {
     title: "Доктор Игра",
@@ -426,6 +469,13 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     editGame: "Редактировать уровень",
     editorTitle: "Редактор уровней",
     apply: "Применить",
-    reset: "Сброс"
+    reset: "Сброс",
+    copyCode: "Копировать код",
+    codeCopied: "Код скопирован!",
+    quickSave: "Быстр. сохр.",
+    quickLoad: "Быстр. загр.",
+    stateSaved: "Сохранено!",
+    stateLoaded: "Загружено!",
+    noSavedState: "Нет сохранения."
   }
 };

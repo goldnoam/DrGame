@@ -41,7 +41,11 @@ export const generateGameCode = async (prompt: string, genre: string): Promise<G
         - Put ALL tweakable values here: player speed, colors (hex), gravity, enemy count/speed, AND the LEVEL DATA (array/grid) if applicable.
         - Define \`window.initGame()\` function that uses \`window.GAME_CONFIG\` to start/restart the game.
         - Example: \`window.GAME_CONFIG = { playerSpeed: 5, enemyCount: 10, themeColor: "#ff0000", map: [...] };\`
-    9.  If the request is unsafe, generate a simple "Pong" game.
+    9.  MOBILE SUPPORT (MANDATORY):
+        - Add touch event listeners (touchstart, touchend) for controls.
+        - If the game uses keys (WASD/Arrows), render on-screen virtual buttons for mobile users.
+        - Prevent default touch actions (scrolling/zooming) on the game canvas.
+    10. If the request is unsafe, generate a simple "Pong" game.
 
     Return JSON with:
     - "html": Full HTML string.
@@ -77,7 +81,13 @@ export const generateGameCode = async (prompt: string, genre: string): Promise<G
               }
             },
             required: ["html", "controls"]
-          }
+          },
+          safetySettings: [
+            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
+            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
+            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' },
+            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
+          ]
         }
       });
 
@@ -131,9 +141,9 @@ export const generateGameCode = async (prompt: string, genre: string): Promise<G
         throw error; // Don't retry these
       }
       
-      // Add delay before retry (2 seconds)
+      // Add delay before retry (Exponential Backoff: 2s, 4s, 6s)
       if (attempt < 2) {
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 2000 * (attempt + 1)));
       }
     }
   }
@@ -162,7 +172,13 @@ export const generateGamePreview = async (prompt: string, genre: string): Promis
       config: {
         imageConfig: {
           aspectRatio: "16:9"
-        }
+        },
+        safetySettings: [
+            { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
+            { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
+            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_ONLY_HIGH' },
+            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_ONLY_HIGH' },
+        ]
       }
     });
 

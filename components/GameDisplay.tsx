@@ -1,5 +1,6 @@
+
 import React, { useEffect, useRef, useState } from 'react';
-import { X, Maximize2, Minimize2, Share2, Check, Star, Gamepad2, MousePointer2, MousePointerClick, ArrowUp, Download, Pencil, RefreshCw, RotateCcw } from 'lucide-react';
+import { X, Maximize2, Minimize2, Share2, Check, Star, Gamepad2, MousePointer2, MousePointerClick, ArrowUp, Download, Pencil, RefreshCw, RotateCcw, FileCode, Save, Upload } from 'lucide-react';
 import { Translation, GameControl } from '../types';
 
 interface GameDisplayProps {
@@ -26,7 +27,8 @@ const KeyCap: React.FC<KeyCapProps> = ({ children, className = "" }) => (
     flex items-center justify-center 
     bg-slate-700 border-t border-x border-slate-600 border-b-4 border-b-slate-900 
     rounded-md text-slate-100 font-mono font-bold shadow-lg select-none
-    transition-transform duration-100 active:translate-y-1 active:border-b-0
+    transition-all duration-200
+    active:translate-y-1 active:border-b-0
     ${className}
   `}>
     {children}
@@ -55,6 +57,14 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
   const [showEditor, setShowEditor] = useState(false);
   const [currentRating, setCurrentRating] = useState(initialRating);
   const [hoverRating, setHoverRating] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [isIframeLoaded, setIsIframeLoaded] = useState(false);
+  
+  // New States for Actions
+  const [showCodeCopied, setShowCodeCopied] = useState(false);
+  const [showStateSaved, setShowStateSaved] = useState(false);
+  const [showStateLoaded, setShowStateLoaded] = useState(false);
+  const [showNoState, setShowNoState] = useState(false);
 
   // Editor State
   const [editableConfig, setEditableConfig] = useState<Record<string, any>>({});
@@ -82,6 +92,7 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
   }, [currentGameCode]);
 
   useEffect(() => {
+    setIsIframeLoaded(false);
     if (iframeRef.current && currentGameCode) {
       const blob = new Blob([currentGameCode], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
@@ -91,7 +102,7 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
         URL.revokeObjectURL(url);
       };
     }
-  }, [currentGameCode]);
+  }, [currentGameCode, refreshKey]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -124,6 +135,7 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
     }
   };
 
+  // Deprecated in favor of Quick Save for state, but kept if needed for props
   const handleSave = () => {
     if (onSave && gameId) {
       onSave(gameId, currentGameCode);
@@ -207,14 +219,53 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
 
   const handleReset = () => {
     if (iframeRef.current?.contentWindow) {
-      // Try to call initGame if it exists on the window object
       const win = iframeRef.current.contentWindow as any;
-      if (typeof win.initGame === 'function') {
-        win.initGame();
-      } else {
-        // Fallback: reload the iframe source to restart
-        iframeRef.current.src = iframeRef.current.src;
+      try {
+        if (typeof win.initGame === 'function') {
+           win.initGame();
+        } else {
+           // If initGame missing, force hard reload
+           setRefreshKey(k => k + 1);
+        }
+      } catch (e) {
+         setRefreshKey(k => k + 1);
       }
+    } else {
+       setRefreshKey(k => k + 1);
+    }
+  };
+
+  // --- New Action Handlers ---
+
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(currentGameCode).then(() => {
+      setShowCodeCopied(true);
+      setTimeout(() => setShowCodeCopied(false), 2000);
+    });
+  };
+
+  const handleQuickSave = () => {
+    if (!gameId) return;
+    try {
+      // Use gameId to save state specific to this game
+      localStorage.setItem(`dr_game_state_${gameId}`, currentGameCode);
+      setShowStateSaved(true);
+      setTimeout(() => setShowStateSaved(false), 2000);
+    } catch (e) {
+      console.error("Failed to save state", e);
+    }
+  };
+
+  const handleQuickLoad = () => {
+    if (!gameId) return;
+    const savedCode = localStorage.getItem(`dr_game_state_${gameId}`);
+    if (savedCode) {
+      setCurrentGameCode(savedCode);
+      setShowStateLoaded(true);
+      setTimeout(() => setShowStateLoaded(false), 2000);
+    } else {
+      setShowNoState(true);
+      setTimeout(() => setShowNoState(false), 2000);
     }
   };
 
@@ -230,37 +281,37 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
     switch (control.icon) {
       case 'wasd':
         return (
-          <div className="flex flex-col items-center gap-1.5 p-1 group-hover:scale-110 transition-transform">
-             <KeyCap className="w-8 h-8 text-sm">W</KeyCap>
+          <div className="flex flex-col items-center gap-1.5 p-1 group-hover:scale-110 group-hover:drop-shadow-lg transition-all duration-200">
+             <KeyCap className="w-8 h-8 text-sm group-hover:bg-slate-600 transition-colors">W</KeyCap>
              <div className="flex gap-1.5">
-               <KeyCap className="w-8 h-8 text-sm">A</KeyCap>
-               <KeyCap className="w-8 h-8 text-sm">S</KeyCap>
-               <KeyCap className="w-8 h-8 text-sm">D</KeyCap>
+               <KeyCap className="w-8 h-8 text-sm group-hover:bg-slate-600 transition-colors">A</KeyCap>
+               <KeyCap className="w-8 h-8 text-sm group-hover:bg-slate-600 transition-colors">S</KeyCap>
+               <KeyCap className="w-8 h-8 text-sm group-hover:bg-slate-600 transition-colors">D</KeyCap>
              </div>
           </div>
         );
       case 'arrows':
         return (
-          <div className="flex flex-col items-center gap-1.5 p-1 group-hover:scale-110 transition-transform">
-             <KeyCap className="w-8 h-8"><ArrowUp size={16} /></KeyCap>
+          <div className="flex flex-col items-center gap-1.5 p-1 group-hover:scale-110 group-hover:drop-shadow-lg transition-all duration-200">
+             <KeyCap className="w-8 h-8 group-hover:bg-slate-600 transition-colors"><ArrowUp size={16} /></KeyCap>
              <div className="flex gap-1.5">
-               <KeyCap className="w-8 h-8"><ArrowUp size={16} className="-rotate-90" /></KeyCap>
-               <KeyCap className="w-8 h-8"><ArrowUp size={16} className="rotate-180" /></KeyCap>
-               <KeyCap className="w-8 h-8"><ArrowUp size={16} className="rotate-90" /></KeyCap>
+               <KeyCap className="w-8 h-8 group-hover:bg-slate-600 transition-colors"><ArrowUp size={16} className="-rotate-90" /></KeyCap>
+               <KeyCap className="w-8 h-8 group-hover:bg-slate-600 transition-colors"><ArrowUp size={16} className="rotate-180" /></KeyCap>
+               <KeyCap className="w-8 h-8 group-hover:bg-slate-600 transition-colors"><ArrowUp size={16} className="rotate-90" /></KeyCap>
              </div>
           </div>
         );
       case 'space':
-        return <KeyCap className="h-8 w-24 text-xs uppercase tracking-wider group-hover:scale-105 transition-transform">{t.controlIcons.space}</KeyCap>;
+        return <KeyCap className="h-8 w-24 text-xs uppercase tracking-wider group-hover:scale-105 group-hover:shadow-primary/50 transition-all duration-200">{t.controlIcons.space}</KeyCap>;
       case 'mouse':
         return (
-          <div className="w-12 h-12 flex items-center justify-center bg-slate-800 rounded-xl border border-slate-600 shadow-md group-hover:scale-110 transition-transform">
+          <div className="w-12 h-12 flex items-center justify-center bg-slate-800 rounded-xl border border-slate-600 shadow-md group-hover:scale-110 group-hover:border-primary/50 group-hover:shadow-lg transition-all duration-200">
              <MousePointer2 size={24} className="text-primary animate-pulse" />
           </div>
         );
       case 'click':
         return (
-          <div className="w-12 h-12 flex items-center justify-center bg-slate-800 rounded-xl border border-slate-600 shadow-md relative group-hover:scale-110 transition-transform">
+          <div className="w-12 h-12 flex items-center justify-center bg-slate-800 rounded-xl border border-slate-600 shadow-md relative group-hover:scale-110 group-hover:border-secondary/50 group-hover:shadow-lg transition-all duration-200">
              <MousePointerClick size={24} className="text-secondary" />
              <span className="absolute -top-1 -right-1 flex h-3 w-3">
                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
@@ -269,7 +320,7 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
           </div>
         );
       default:
-        return <KeyCap className="h-8 min-w-[32px] px-2 text-xs uppercase group-hover:scale-110 transition-transform">{control.keyName || "?"}</KeyCap>;
+        return <KeyCap className="h-8 min-w-[32px] px-2 text-xs uppercase group-hover:scale-110 group-hover:shadow-primary/50 transition-all duration-200">{control.keyName || "?"}</KeyCap>;
     }
   };
 
@@ -357,14 +408,14 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
         }`}
       >
         {/* Header/Controls */}
-        <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-black/90 to-transparent flex items-center justify-between px-4 z-20 opacity-0 hover:opacity-100 transition-opacity duration-300">
-          <div className="flex items-center gap-4">
-             <span className="text-white/80 font-mono text-sm shadow-black drop-shadow-md hidden md:block">{t.gameReady}</span>
+        <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-black/90 to-transparent flex items-center justify-between px-4 z-20 opacity-0 hover:opacity-100 transition-opacity duration-300 overflow-x-auto scrollbar-thin">
+          <div className="flex items-center gap-4 flex-shrink-0">
+             <span className="text-white/80 font-mono text-sm shadow-black drop-shadow-md hidden lg:block">{t.gameReady}</span>
              
              {/* Rating System */}
              {onRate && (
                <div className="flex items-center gap-1 bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
-                  <span className="text-xs text-slate-400 mr-2">{t.rateGame}:</span>
+                  <span className="text-xs text-slate-400 mr-2 hidden sm:inline">{t.rateGame}:</span>
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
                       key={star}
@@ -389,23 +440,57 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
              )}
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Save Button */}
-            {onSave && (
-               <button
-                onClick={handleSave}
-                className="group relative p-2 text-white/80 hover:text-white bg-black/40 hover:bg-black/60 rounded-full backdrop-blur-sm transition-all"
-                title={t.download} // Intentionally using 'Download' tooltip style for consistency if needed, but icon is save
-                aria-label="Save"
-              >
-                {showSaved ? <Check size={20} className="text-green-400" /> : <Download size={20} className="rotate-180" />} {/* Using rotate to mimic upload/save if generic icon */}
-                 {/* Better to use a real save icon if available, let's use standard Floppy/Save logic if imported or check icons */}
-                 {/* Reverting to standard 'Save' icon logic from previous step, but using what's available or Download for file save. 
-                     Wait, onSave is for history persistence. The user asked for "Download Game" button explicitly.
-                     The button below is the Download button. This button here is for saving TO LOCAL STORAGE history.
-                 */}
-              </button>
-            )}
+          <div className="flex items-center gap-2 flex-shrink-0">
+             {/* Copy Code Button */}
+             <button
+              onClick={handleCopyCode}
+              className="group relative p-2 text-white/80 hover:text-white bg-black/40 hover:bg-black/60 rounded-full backdrop-blur-sm transition-all"
+              title={t.copyCode}
+              aria-label={t.copyCode}
+            >
+              {showCodeCopied ? <Check size={20} className="text-green-400" /> : <FileCode size={20} />}
+              {showCodeCopied && (
+                <div className="absolute top-full right-0 mt-2 px-2 py-1 bg-black/80 text-white text-xs rounded whitespace-nowrap">
+                  {t.codeCopied}
+                </div>
+              )}
+            </button>
+
+            {/* Quick Save State */}
+            <button
+              onClick={handleQuickSave}
+              className="group relative p-2 text-white/80 hover:text-white bg-black/40 hover:bg-black/60 rounded-full backdrop-blur-sm transition-all"
+              title={t.quickSave}
+              aria-label={t.quickSave}
+            >
+              {showStateSaved ? <Check size={20} className="text-green-400" /> : <Save size={20} />}
+              {showStateSaved && (
+                <div className="absolute top-full right-0 mt-2 px-2 py-1 bg-black/80 text-white text-xs rounded whitespace-nowrap">
+                  {t.stateSaved}
+                </div>
+              )}
+            </button>
+
+             {/* Quick Load State */}
+            <button
+              onClick={handleQuickLoad}
+              className="group relative p-2 text-white/80 hover:text-white bg-black/40 hover:bg-black/60 rounded-full backdrop-blur-sm transition-all"
+              title={t.quickLoad}
+              aria-label={t.quickLoad}
+            >
+              {showStateLoaded ? <Check size={20} className="text-green-400" /> : <Upload size={20} />}
+              {showStateLoaded && (
+                <div className="absolute top-full right-0 mt-2 px-2 py-1 bg-black/80 text-white text-xs rounded whitespace-nowrap">
+                  {t.stateLoaded}
+                </div>
+              )}
+              {showNoState && (
+                <div className="absolute top-full right-0 mt-2 px-2 py-1 bg-red-900/80 text-white text-xs rounded whitespace-nowrap">
+                  {t.noSavedState}
+                </div>
+              )}
+            </button>
+
 
             {/* Editor Button */}
             {Object.keys(editableConfig).length > 0 && (
@@ -527,7 +612,7 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
 
         {/* Controls Overlay */}
         {showControls && controls.length > 0 && !showEditor && (
-          <div className={`absolute top-20 ${isRTL ? 'left-4' : 'right-4'} z-10 w-72 bg-slate-900/95 backdrop-blur-md border border-slate-700 rounded-xl p-4 shadow-2xl animate-in fade-in slide-in-from-right-4`}>
+          <div className={`absolute top-20 ${isRTL ? 'left-4' : 'right-4'} z-10 w-72 bg-slate-900/95 backdrop-blur-md border border-slate-700 rounded-xl p-4 shadow-2xl animate-in fade-in slide-in-from-right-4 pointer-events-none md:pointer-events-auto`}>
              <h3 className="text-white font-bold text-sm mb-4 flex items-center gap-2 border-b border-white/10 pb-2">
                <Gamepad2 size={16} className="text-primary" />
                {t.controls}
@@ -552,7 +637,8 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
         <iframe
           ref={iframeRef}
           title="Generated Game"
-          className="w-full h-full border-none bg-slate-950"
+          onLoad={() => setIsIframeLoaded(true)}
+          className={`w-full h-full border-none bg-slate-950 touch-none transition-opacity duration-700 ease-in-out ${isIframeLoaded ? 'opacity-100' : 'opacity-0'}`}
           sandbox="allow-scripts allow-forms allow-pointer-lock allow-modals"
         />
       </div>

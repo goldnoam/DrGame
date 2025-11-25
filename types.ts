@@ -1,3 +1,4 @@
+
 export enum Language {
   ENGLISH = 'en',
   HEBREW = 'he',
@@ -86,6 +87,14 @@ export interface Translation {
   editorTitle: string;
   apply: string;
   reset: string;
+  // New keys
+  copyCode: string;
+  codeCopied: string;
+  quickSave: string;
+  quickLoad: string;
+  stateSaved: string;
+  stateLoaded: string;
+  noSavedState: string;
 }
 
 export interface GameGenerationResponse {
