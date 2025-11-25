@@ -70,7 +70,8 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     quickLoadTooltip: "Load previously saved game progress from storage",
     stateSaved: "State Saved!",
     stateLoaded: "State Loaded!",
-    noSavedState: "No saved state found."
+    noSavedState: "No saved state found.",
+    soundSettings: "Sound Settings"
   },
   [Language.HEBREW]: {
     title: "ד\"ר גיים",
@@ -140,7 +141,8 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     quickLoadTooltip: "טען את מצב המשחק שנשמר לאחרונה",
     stateSaved: "נשמר!",
     stateLoaded: "נטען!",
-    noSavedState: "לא נמצאה שמירה."
+    noSavedState: "לא נמצאה שמירה.",
+    soundSettings: "הגדרות סאונד"
   },
   [Language.CHINESE]: {
     title: "游戏博士",
@@ -210,7 +212,8 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     quickLoadTooltip: "加载以前保存的游戏状态",
     stateSaved: "状态已保存！",
     stateLoaded: "状态已加载！",
-    noSavedState: "未找到保存的状态。"
+    noSavedState: "未找到保存的状态。",
+    soundSettings: "声音设置"
   },
   [Language.HINDI]: {
     title: "Dr. Game",
@@ -280,7 +283,8 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     quickLoadTooltip: "पहले से सहेजी गई गेम स्थिति लोड करें",
     stateSaved: "राज्य सहेजा गया!",
     stateLoaded: "राज्य लोड किया गया!",
-    noSavedState: "कोई सहेजा गया राज्य नहीं मिला।"
+    noSavedState: "कोई सहेजा गया राज्य नहीं मिला।",
+    soundSettings: "ध्वनि सेटिंग्स"
   },
   [Language.FRENCH]: {
     title: "Dr. Game",
@@ -350,7 +354,8 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     quickLoadTooltip: "Charger l'état de jeu précédemment sauvegardé",
     stateSaved: "État sauvegardé !",
     stateLoaded: "État chargé !",
-    noSavedState: "Aucun état sauvegardé."
+    noSavedState: "Aucun état sauvegardé.",
+    soundSettings: "Paramètres sonores"
   },
   [Language.GERMAN]: {
     title: "Dr. Game",
@@ -420,7 +425,8 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     quickLoadTooltip: "Laden Sie den zuvor gespeicherten Spielstatus",
     stateSaved: "Status gespeichert!",
     stateLoaded: "Status geladen!",
-    noSavedState: "Kein gespeicherter Status."
+    noSavedState: "Kein gespeicherter Status.",
+    soundSettings: "Sound-Einstellungen"
   },
   [Language.RUSSIAN]: {
     title: "Доктор Игра",
@@ -490,6 +496,7 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     quickLoadTooltip: "Загрузить ранее сохраненное состояние игры",
     stateSaved: "Сохранено!",
     stateLoaded: "Загружено!",
-    noSavedState: "Нет сохранения."
+    noSavedState: "Нет сохранения.",
+    soundSettings: "Настройки звука"
   }
 };

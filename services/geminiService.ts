@@ -1,5 +1,5 @@
 
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 import { GameControl, GameGenerationResponse } from '../types';
 
 const getApiKey = () => {
@@ -20,9 +20,6 @@ export const generateGameCode = async (prompt: string, genre: string): Promise<G
   const ai = new GoogleGenAI({ apiKey });
 
   const fullPrompt = `
-    You are an expert game developer known as "Dr. Game". 
-    Your task is to create a complete, playable, single-file HTML5 game based on the user's description.
-    
     Genre: ${genre}
     User Description: "${prompt}"
     
@@ -41,35 +38,49 @@ export const generateGameCode = async (prompt: string, genre: string): Promise<G
         - Define a global object \`window.GAME_CONFIG\` at the VERY TOP of your script.
         - Put ALL tweakable values here: player speed, colors (hex), gravity, enemy count/speed, AND the LEVEL DATA (array/grid) if applicable.
         - Define \`window.initGame()\` function that uses \`window.GAME_CONFIG\` to start/restart the game.
-        - Example: \`window.GAME_CONFIG = { playerSpeed: 5, enemyCount: 10, themeColor: "#ff0000", map: [...] };\`
+        - INCLUDE SOUND SETTINGS:
+          - \`soundVolume\` (number 0.0 to 1.0)
+          - \`soundEnabled\` (boolean)
+          - \`soundType\` (string: 'sine', 'square', 'sawtooth', 'triangle')
     9.  MOBILE SUPPORT (MANDATORY):
         - Add touch event listeners (touchstart, touchend) for controls.
         - If the game uses keys (WASD/Arrows), render on-screen virtual buttons for mobile users.
         - Prevent default touch actions (scrolling/zooming) on the game canvas.
     10. If the request is unsafe, generate a simple "Pong" game.
 
-    Return valid JSON with the following structure (Do NOT use markdown code blocks):
-    {
-      "html": "Full HTML string here",
-      "controls": [
-        { "icon": "arrows" | "wasd" | "mouse" | "click" | "space" | "other", "label": "Control Label", "keyName": "Optional Key" }
-      ]
-    }
+    OUTPUT FORMAT INSTRUCTIONS:
+    You must output two distinct sections.
+    
+    SECTION 1: THE GAME CODE
+    Wrap the complete HTML code (including <style> and <script>) inside these delimiters:
+    <<<HTML_START>>>
+    ... your html code ...
+    <<<HTML_END>>>
+
+    SECTION 2: THE CONTROLS JSON
+    Wrap the controls metadata JSON inside these delimiters:
+    <<<JSON_START>>>
+    [
+      { "icon": "arrows", "label": "Move" },
+      { "icon": "space", "label": "Jump" }
+    ]
+    <<<JSON_END>>>
+    
+    Do NOT output any other text before or after these blocks.
   `;
 
   let lastError: any;
-  // Retry mechanism with backoff
+  
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
         contents: fullPrompt,
         config: {
+          systemInstruction: 'You are "Dr. Game", an expert game developer. You write clean, bug-free, single-file HTML5 code.',
           maxOutputTokens: 8192,
           temperature: 0.6, 
-          responseMimeType: 'application/json',
-          // Note: responseSchema is intentionally removed here to prevent validation errors 
-          // on large HTML strings which frequently cause EMPTY_RESPONSE.
+          // Removed responseMimeType: 'application/json' to allow robust text blocks
           safetySettings: [
             { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
             { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
@@ -79,60 +90,62 @@ export const generateGameCode = async (prompt: string, genre: string): Promise<G
         }
       });
 
-      // Check safety first
       if (response.candidates && response.candidates[0]?.finishReason === 'SAFETY') {
         throw new Error('SAFETY_ERROR');
       }
 
-      // Extract text aggressively
-      let text = response.text;
+      let text = response.text || "";
       if (!text && response.candidates?.[0]?.content?.parts?.[0]?.text) {
         text = response.candidates[0].content.parts[0].text;
       }
 
       if (!text) {
-        // If still empty, it might be a transient model issue, throw to trigger retry
         throw new Error('EMPTY_RESPONSE');
       }
 
-      // Parse JSON
-      let jsonStr = text.trim();
-      // Remove markdown code blocks if present (despite instruction)
-      jsonStr = jsonStr.replace(/^```json\s*/, '').replace(/\s*```$/, '');
-      
-      const firstOpen = jsonStr.indexOf('{');
-      const lastClose = jsonStr.lastIndexOf('}');
-      
-      if (firstOpen !== -1 && lastClose !== -1 && lastClose > firstOpen) {
-        jsonStr = jsonStr.substring(firstOpen, lastClose + 1);
+      // Robust Parsing using Delimiters
+      const htmlMatch = text.match(/<<<HTML_START>>>([\s\S]*?)<<<HTML_END>>>/);
+      const jsonMatch = text.match(/<<<JSON_START>>>([\s\S]*?)<<<JSON_END>>>/);
+
+      let html = "";
+      let controls: GameControl[] = [];
+
+      if (htmlMatch && htmlMatch[1]) {
+          html = htmlMatch[1].trim();
+      } else {
+          // Fallback regex for standard HTML block if delimiters missed
+          const fallbackHtml = text.match(/<!DOCTYPE html>[\s\S]*?<\/html>/i) || text.match(/<html[\s\S]*?<\/html>/i);
+          if (fallbackHtml) {
+             html = fallbackHtml[0];
+          }
       }
-      
-      try {
-        const json = JSON.parse(jsonStr);
-        if (!json.html) throw new Error("Invalid JSON structure");
-        return json as GameGenerationResponse;
-      } catch (parseError) {
-        console.warn("JSON Parse failed, attempting fallback regex...");
-        // Fallback: Try to extract HTML directly if JSON failed but text exists
-        const htmlMatch = text.match(/<html[\s\S]*?<\/html>/i) || text.match(/<!DOCTYPE html[\s\S]*?<\/html>/i);
-        if (htmlMatch) {
-            return {
-                html: htmlMatch[0],
-                controls: [{ icon: 'other', label: 'Check Game UI', keyName: '?' }]
-            };
-        }
-        throw parseError;
+
+      if (jsonMatch && jsonMatch[1]) {
+          try {
+              controls = JSON.parse(jsonMatch[1].trim());
+          } catch (e) { 
+              console.warn("Controls JSON parse failed, using default"); 
+          }
+      } else {
+          // Default controls if missing
+           controls = [{ icon: 'other', label: 'Play', keyName: 'Game' }];
       }
+
+      if (!html) {
+         throw new Error("INVALID_FORMAT"); // Generated text didn't contain valid code block
+      }
+
+      return { html, controls };
 
     } catch (error: any) {
       console.warn(`Attempt ${attempt + 1} failed:`, error);
       lastError = error;
       
       if (error.message === 'SAFETY_ERROR' || error.message === 'API_KEY_MISSING') {
-        throw error; // Don't retry these
+        throw error;
       }
       
-      // Add delay before retry (Exponential Backoff: 2s, 4s, 6s)
+      // Exponential Backoff
       if (attempt < 2) {
         await new Promise(resolve => setTimeout(resolve, 2000 * (attempt + 1)));
       }

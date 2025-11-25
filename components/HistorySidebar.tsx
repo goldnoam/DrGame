@@ -1,6 +1,7 @@
+
 import React, { useState } from 'react';
-import { X, Play, Trash2, Clock, FileText, Copy, Check, Star, AlertCircle, Download } from 'lucide-react';
-import { Translation, GameHistoryItem } from '../types';
+import { X, Play, Trash2, Clock, FileText, Copy, Check, Star, AlertCircle, Download, Share2, Gamepad2, MousePointer2, MousePointerClick, ArrowUp } from 'lucide-react';
+import { Translation, GameHistoryItem, GameControl } from '../types';
 
 interface HistorySidebarProps {
   isOpen: boolean;
@@ -22,6 +23,7 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
   isRTL
 }) => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [sharedId, setSharedId] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const handleCopy = (text: string, id: string) => {
@@ -46,6 +48,64 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Download failed', err);
+    }
+  };
+
+  const handleShare = async (item: GameHistoryItem) => {
+    const shareText = `Check out this game I created with Dr. Game AI!\n\nPrompt: ${item.prompt}`;
+    const fileName = `dr-game-${item.id}.html`;
+    const blob = new Blob([item.code], { type: 'text/html' });
+    const file = new File([blob], fileName, { type: 'text/html' });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({
+          files: [file],
+          title: 'Dr. Game Creation',
+          text: shareText,
+        });
+        return;
+      } catch (err) {
+        console.log('File share cancelled or failed', err);
+      }
+    } else if (navigator.share) {
+       try {
+        await navigator.share({
+          title: 'Dr. Game Creation',
+          text: shareText,
+        });
+        return;
+      } catch (err) {
+        console.log('Text share cancelled or failed', err);
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(shareText);
+      setSharedId(item.id);
+      setTimeout(() => setSharedId(null), 2000);
+      
+      const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
+      window.open(twitterUrl, '_blank');
+    } catch (err) {
+      console.error('Failed to copy', err);
+    }
+  };
+
+  const renderMiniControlIcon = (control: GameControl) => {
+    switch (control.icon) {
+      case 'wasd':
+        return <span className="text-[10px] font-bold bg-slate-700 px-1 rounded text-slate-300">WASD</span>;
+      case 'arrows':
+        return <ArrowUp size={14} className="text-slate-300" />;
+      case 'mouse':
+        return <MousePointer2 size={14} className="text-slate-300" />;
+      case 'click':
+        return <MousePointerClick size={14} className="text-slate-300" />;
+      case 'space':
+        return <span className="text-[10px] font-bold bg-slate-700 px-1 rounded text-slate-300">SPC</span>;
+      default:
+        return <span className="text-[10px] font-bold bg-slate-700 px-1 rounded text-slate-300">{control.keyName || "?"}</span>;
     }
   };
 
@@ -110,18 +170,34 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                     {item.prompt}
                   </p>
 
-                  {/* Rating Display in History */}
-                  <div className="flex items-center gap-1 mb-4 h-4">
-                    {item.rating && item.rating > 0 ? (
-                      Array.from({ length: 5 }).map((_, i) => (
-                         <Star 
-                           key={i} 
-                           size={12} 
-                           className={`${i < item.rating! ? 'fill-yellow-400 text-yellow-400' : 'text-slate-700'}`} 
-                         />
-                      ))
-                    ) : (
-                      <span className="text-xs text-slate-600 italic">Unrated</span>
+                  {/* Rating and Controls Display in History */}
+                  <div className="flex justify-between items-center mb-4 h-5">
+                    <div className="flex items-center gap-1">
+                      {item.rating && item.rating > 0 ? (
+                        Array.from({ length: 5 }).map((_, i) => (
+                           <Star 
+                             key={i} 
+                             size={12} 
+                             className={`${i < item.rating! ? 'fill-yellow-400 text-yellow-400' : 'text-slate-700'}`} 
+                           />
+                        ))
+                      ) : (
+                        <span className="text-xs text-slate-600 italic">Unrated</span>
+                      )}
+                    </div>
+                    
+                    {/* Mini Controls Visualization */}
+                    {item.controls && item.controls.length > 0 && (
+                      <div className="flex items-center gap-1.5 opacity-60">
+                         {item.controls.slice(0, 3).map((ctrl, i) => (
+                           <div key={i} title={ctrl.label}>
+                             {renderMiniControlIcon(ctrl)}
+                           </div>
+                         ))}
+                         {item.controls.length > 3 && (
+                           <span className="text-[10px] text-slate-400">+{item.controls.length - 3}</span>
+                         )}
+                      </div>
                     )}
                   </div>
 
@@ -166,6 +242,19 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                         <Play size={16} />
                         {t.play}
                       </button>
+                      
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleShare(item);
+                        }}
+                        className="p-2 text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 rounded transition-colors"
+                        title={sharedId === item.id ? t.shareSuccess : t.share}
+                        aria-label={t.share}
+                      >
+                         {sharedId === item.id ? <Check size={16} /> : <Share2 size={16} />}
+                      </button>
+
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -177,17 +266,19 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                       >
                          <Download size={16} />
                       </button>
+                      
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleCopy(item.prompt, item.id);
                         }}
-                        className="p-2 text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 rounded transition-colors"
+                        className="p-2 text-slate-500 hover:text-purple-400 hover:bg-purple-400/10 rounded transition-colors"
                         title={copiedId === item.id ? t.copied : t.copyPrompt}
                         aria-label={t.copyPrompt}
                       >
                          {copiedId === item.id ? <Check size={16} /> : <Copy size={16} />}
                       </button>
+
                       <button
                         onClick={(e) => {
                           e.stopPropagation();

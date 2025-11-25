@@ -97,6 +97,7 @@ export interface Translation {
   stateSaved: string;
   stateLoaded: string;
   noSavedState: string;
+  soundSettings: string;
 }
 
 export interface GameGenerationResponse {

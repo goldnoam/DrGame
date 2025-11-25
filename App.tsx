@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { Upload, Sparkles, Loader2, Gamepad2, History, Eye } from 'lucide-react';
 import { TRANSLATIONS } from './constants';
@@ -139,7 +140,7 @@ const App: React.FC = () => {
         setError(t.errorSafety);
       } else if (errorMessage === 'API_KEY_MISSING') {
         setError(t.errorApiKey);
-      } else if (errorMessage === 'EMPTY_RESPONSE' || errorMessage === 'FAILED_AFTER_RETRIES') {
+      } else if (errorMessage === 'EMPTY_RESPONSE' || errorMessage === 'FAILED_AFTER_RETRIES' || errorMessage === 'INVALID_FORMAT') {
         setError("The server is busy or returned an empty response. Please try again.");
       } else if (errorMessage.includes('xhr') || errorMessage.includes('fetch') || errorMessage.includes('500') || errorMessage.includes('Network')) {
         setError("Network or Server Error. Please check your connection and try again.");

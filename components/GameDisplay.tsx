@@ -1,6 +1,6 @@
 
 import React, { useEffect, useRef, useState } from 'react';
-import { X, Maximize2, Minimize2, Share2, Check, Star, Gamepad2, MousePointer2, MousePointerClick, ArrowUp, Download, Pencil, RefreshCw, RotateCcw, FileCode, Save, Upload } from 'lucide-react';
+import { X, Maximize2, Minimize2, Share2, Check, Star, Gamepad2, MousePointer2, MousePointerClick, ArrowUp, Download, Pencil, RefreshCw, RotateCcw, FileCode, Save, Upload, Volume2, Music } from 'lucide-react';
 import { Translation, GameControl } from '../types';
 
 interface GameDisplayProps {
@@ -238,10 +238,14 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
   // --- New Action Handlers ---
 
   const handleCopyCode = () => {
-    navigator.clipboard.writeText(currentGameCode).then(() => {
-      setShowCodeCopied(true);
-      setTimeout(() => setShowCodeCopied(false), 2000);
-    });
+    navigator.clipboard.writeText(currentGameCode)
+      .then(() => {
+        setShowCodeCopied(true);
+        setTimeout(() => setShowCodeCopied(false), 2000);
+      })
+      .catch(err => {
+        console.error("Failed to copy code to clipboard", err);
+      });
   };
 
   const handleQuickSave = () => {
@@ -320,13 +324,52 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
           </div>
         );
       default:
-        return <KeyCap className="h-8 min-w-[32px] px-2 text-xs uppercase group-hover:scale-110 group-hover:shadow-primary/50 transition-all duration-200">{control.keyName || "?"}</KeyCap>;
+        return <KeyCap className="h-8 min-w-[32px] px-2 text-xs uppercase group-hover:scale-105 group-hover:shadow-primary/50 transition-all duration-200">{control.keyName || "?"}</KeyCap>;
     }
   };
 
   // Helper to determine input type
   const renderEditorInput = (key: string, value: any) => {
     const type = typeof value;
+    const lowerKey = key.toLowerCase();
+    
+    // Volume Controls (Range Slider)
+    if (type === 'number' && (lowerKey.includes('volume') || lowerKey.includes('gain'))) {
+       return (
+         <div className="flex items-center gap-2">
+           <Volume2 size={16} className="text-slate-400" />
+           <input 
+             type="range" 
+             min="0" 
+             max="1" 
+             step="0.05"
+             value={value} 
+             onChange={(e) => handleConfigChange(key, parseFloat(e.target.value))}
+             className="flex-1 accent-primary h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+           />
+           <span className="text-xs font-mono w-8 text-right text-slate-300">{(value * 100).toFixed(0)}%</span>
+         </div>
+       );
+    }
+
+    // Sound Type (Dropdown)
+    if (type === 'string' && (lowerKey.includes('type') && (lowerKey.includes('sound') || lowerKey.includes('wave')))) {
+       return (
+        <div className="flex items-center gap-2">
+          <Music size={16} className="text-slate-400" />
+          <select 
+            value={value} 
+            onChange={(e) => handleConfigChange(key, e.target.value)}
+            className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm text-white focus:ring-1 focus:ring-primary cursor-pointer"
+          >
+            <option value="sine">Sine (Smooth)</option>
+            <option value="square">Square (Retro)</option>
+            <option value="sawtooth">Sawtooth (Sharp)</option>
+            <option value="triangle">Triangle (Mellow)</option>
+          </select>
+        </div>
+       );
+    }
     
     if (type === 'number') {
       return (
@@ -341,12 +384,15 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
     
     if (type === 'boolean') {
       return (
-        <input 
-          type="checkbox" 
-          checked={value} 
-          onChange={(e) => handleConfigChange(key, e.target.checked)}
-          className="w-5 h-5 rounded border-slate-700 bg-slate-900 text-primary focus:ring-primary"
-        />
+        <div className="flex items-center gap-2">
+          <input 
+            type="checkbox" 
+            checked={value} 
+            onChange={(e) => handleConfigChange(key, e.target.checked)}
+            className="w-5 h-5 rounded border-slate-700 bg-slate-900 text-primary focus:ring-primary cursor-pointer"
+          />
+          <span className="text-sm text-slate-400">{value ? 'Enabled' : 'Disabled'}</span>
+        </div>
       );
     }
     
@@ -399,6 +445,21 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
     return null;
   };
 
+  const getGroupedConfig = () => {
+    const soundKeys = Object.keys(editableConfig).filter(k => 
+      k.toLowerCase().includes('sound') || 
+      k.toLowerCase().includes('music') || 
+      k.toLowerCase().includes('volume') || 
+      k.toLowerCase().includes('audio')
+    );
+    
+    const gameKeys = Object.keys(editableConfig).filter(k => !soundKeys.includes(k));
+    
+    return { soundKeys, gameKeys };
+  };
+
+  const { soundKeys, gameKeys } = getGroupedConfig();
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/90 backdrop-blur-md p-4 animate-fade-in">
       <div 
@@ -450,13 +511,13 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
             >
               {showCodeCopied ? <Check size={20} className="text-green-400" /> : <FileCode size={20} />}
               {showCodeCopied && (
-                <div className="absolute top-full right-0 mt-2 px-2 py-1 bg-black/80 text-white text-xs rounded whitespace-nowrap">
+                <div className="absolute top-full right-0 mt-3 px-3 py-1.5 bg-green-500/90 text-white text-xs font-bold rounded shadow-lg whitespace-nowrap z-50 animate-in fade-in slide-in-from-top-1">
                   {t.codeCopied}
                 </div>
               )}
             </button>
 
-            {/* Quick Save State */}
+            {/* Save Game State (Using Quick Save Key) */}
             <button
               onClick={handleQuickSave}
               className="group relative p-2 text-white/80 hover:text-white bg-black/40 hover:bg-black/60 rounded-full backdrop-blur-sm transition-all"
@@ -465,13 +526,13 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
             >
               {showStateSaved ? <Check size={20} className="text-green-400" /> : <Save size={20} />}
               {showStateSaved && (
-                <div className="absolute top-full right-0 mt-2 px-2 py-1 bg-black/80 text-white text-xs rounded whitespace-nowrap">
+                <div className="absolute top-full right-0 mt-3 px-3 py-1.5 bg-blue-500/90 text-white text-xs font-bold rounded shadow-lg whitespace-nowrap z-50 animate-in fade-in slide-in-from-top-1">
                   {t.stateSaved}
                 </div>
               )}
             </button>
 
-             {/* Quick Load State */}
+             {/* Load Game State (Using Quick Load Key) */}
             <button
               onClick={handleQuickLoad}
               className="group relative p-2 text-white/80 hover:text-white bg-black/40 hover:bg-black/60 rounded-full backdrop-blur-sm transition-all"
@@ -480,12 +541,12 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
             >
               {showStateLoaded ? <Check size={20} className="text-green-400" /> : <Upload size={20} />}
               {showStateLoaded && (
-                <div className="absolute top-full right-0 mt-2 px-2 py-1 bg-black/80 text-white text-xs rounded whitespace-nowrap">
+                <div className="absolute top-full right-0 mt-3 px-3 py-1.5 bg-blue-500/90 text-white text-xs font-bold rounded shadow-lg whitespace-nowrap z-50 animate-in fade-in slide-in-from-top-1">
                   {t.stateLoaded}
                 </div>
               )}
               {showNoState && (
-                <div className="absolute top-full right-0 mt-2 px-2 py-1 bg-red-900/80 text-white text-xs rounded whitespace-nowrap">
+                <div className="absolute top-full right-0 mt-3 px-3 py-1.5 bg-red-600/90 text-white text-xs font-bold rounded shadow-lg whitespace-nowrap z-50 animate-in fade-in slide-in-from-top-1">
                   {t.noSavedState}
                 </div>
               )}
@@ -536,7 +597,7 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
             >
               {showDownloaded ? <Check size={20} className="text-green-400" /> : <Download size={20} />}
               {showDownloaded && (
-                <div className="absolute top-full right-0 mt-2 px-2 py-1 bg-black/80 text-white text-xs rounded whitespace-nowrap">
+                <div className="absolute top-full right-0 mt-3 px-3 py-1.5 bg-black/80 text-white text-xs font-bold rounded shadow-lg whitespace-nowrap z-50 animate-in fade-in slide-in-from-top-1">
                   {t.downloadSuccess}
                 </div>
               )}
@@ -551,7 +612,7 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
               {showCopied ? <Check size={20} className="text-green-400" /> : <Share2 size={20} />}
               
               {showCopied && (
-                <div className="absolute top-full right-0 mt-2 px-2 py-1 bg-black/80 text-white text-xs rounded whitespace-nowrap">
+                <div className="absolute top-full right-0 mt-3 px-3 py-1.5 bg-black/80 text-white text-xs font-bold rounded shadow-lg whitespace-nowrap z-50 animate-in fade-in slide-in-from-top-1">
                   {t.shareSuccess}
                 </div>
               )}
@@ -589,13 +650,35 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
                </button>
              </div>
              
-             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {Object.entries(editableConfig).map(([key, value]) => (
-                  <div key={key} className="space-y-1">
-                    <label className="text-xs text-slate-400 uppercase tracking-wider font-semibold">{key}</label>
-                    {renderEditorInput(key, value)}
+             <div className="flex-1 overflow-y-auto p-4 space-y-6">
+                
+                {/* Sound Settings Section */}
+                {soundKeys.length > 0 && (
+                  <div className="space-y-3">
+                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1 border-b border-slate-800 pb-1">
+                      <Volume2 size={12} />
+                      {t.soundSettings}
+                    </h4>
+                    {soundKeys.map(key => (
+                      <div key={key} className="space-y-1">
+                         <label className="text-xs text-slate-300 font-medium capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</label>
+                         {renderEditorInput(key, editableConfig[key])}
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
+
+                {/* Game Settings Section */}
+                <div className="space-y-3">
+                  <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-800 pb-1">Game Settings</h4>
+                  {gameKeys.map(key => (
+                    <div key={key} className="space-y-1">
+                      <label className="text-xs text-slate-300 font-medium capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</label>
+                      {renderEditorInput(key, editableConfig[key])}
+                    </div>
+                  ))}
+                </div>
+
              </div>
 
              <div className="p-4 border-t border-slate-800 bg-slate-900/50 flex gap-2">
@@ -613,9 +696,14 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
         {/* Controls Overlay */}
         {showControls && controls.length > 0 && !showEditor && (
           <div className={`absolute top-20 ${isRTL ? 'left-4' : 'right-4'} z-10 w-72 bg-slate-900/95 backdrop-blur-md border border-slate-700 rounded-xl p-4 shadow-2xl animate-in fade-in slide-in-from-right-4 pointer-events-none md:pointer-events-auto`}>
-             <h3 className="text-white font-bold text-sm mb-4 flex items-center gap-2 border-b border-white/10 pb-2">
-               <Gamepad2 size={16} className="text-primary" />
-               {t.controls}
+             <h3 className="text-white font-bold text-sm mb-4 flex items-center justify-between border-b border-white/10 pb-2">
+               <div className="flex items-center gap-2">
+                 <Gamepad2 size={16} className="text-primary" />
+                 {t.controls}
+               </div>
+               <button onClick={() => setShowControls(false)} className="text-slate-400 hover:text-white transition-colors" aria-label={t.close}>
+                 <X size={14} />
+               </button>
              </h3>
              <div className="space-y-4">
                {controls.map((control, idx) => (
