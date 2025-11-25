@@ -66,6 +66,8 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     codeCopied: "Code Copied!",
     quickSave: "Quick Save State",
     quickLoad: "Quick Load State",
+    quickSaveTooltip: "Save current game progress locally to resume later",
+    quickLoadTooltip: "Load previously saved game progress from storage",
     stateSaved: "State Saved!",
     stateLoaded: "State Loaded!",
     noSavedState: "No saved state found."
@@ -134,6 +136,8 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     codeCopied: "הקוד הועתק!",
     quickSave: "שמירה מהירה",
     quickLoad: "טעינה מהירה",
+    quickSaveTooltip: "שמור את מצב המשחק הנוכחי באופן מקומי כדי להמשיך מאוחר יותר",
+    quickLoadTooltip: "טען את מצב המשחק שנשמר לאחרונה",
     stateSaved: "נשמר!",
     stateLoaded: "נטען!",
     noSavedState: "לא נמצאה שמירה."
@@ -202,6 +206,8 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     codeCopied: "代码已复制！",
     quickSave: "快速保存",
     quickLoad: "快速加载",
+    quickSaveTooltip: "将当前游戏状态保存到本地以便稍后恢复",
+    quickLoadTooltip: "加载以前保存的游戏状态",
     stateSaved: "状态已保存！",
     stateLoaded: "状态已加载！",
     noSavedState: "未找到保存的状态。"
@@ -270,6 +276,8 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     codeCopied: "कोड कॉपी किया गया!",
     quickSave: "त्वरित सहेजें",
     quickLoad: "त्वरित लोड",
+    quickSaveTooltip: "बाद में फिर से शुरू करने के लिए वर्तमान गेम स्थिति को स्थानीय रूप से सहेजें",
+    quickLoadTooltip: "पहले से सहेजी गई गेम स्थिति लोड करें",
     stateSaved: "राज्य सहेजा गया!",
     stateLoaded: "राज्य लोड किया गया!",
     noSavedState: "कोई सहेजा गया राज्य नहीं मिला।"
@@ -338,6 +346,8 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     codeCopied: "Code copié !",
     quickSave: "Sauvegarde rapide",
     quickLoad: "Chargement rapide",
+    quickSaveTooltip: "Sauvegarder l'état actuel du jeu localement pour reprendre plus tard",
+    quickLoadTooltip: "Charger l'état de jeu précédemment sauvegardé",
     stateSaved: "État sauvegardé !",
     stateLoaded: "État chargé !",
     noSavedState: "Aucun état sauvegardé."
@@ -406,6 +416,8 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     codeCopied: "Code kopiert!",
     quickSave: "Schnellspeichern",
     quickLoad: "Schnellladen",
+    quickSaveTooltip: "Speichern Sie den aktuellen Spielstatus lokal, um ihn später fortzusetzen",
+    quickLoadTooltip: "Laden Sie den zuvor gespeicherten Spielstatus",
     stateSaved: "Status gespeichert!",
     stateLoaded: "Status geladen!",
     noSavedState: "Kein gespeicherter Status."
@@ -474,6 +486,8 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     codeCopied: "Код скопирован!",
     quickSave: "Быстр. сохр.",
     quickLoad: "Быстр. загр.",
+    quickSaveTooltip: "Сохранить текущее состояние игры локально, чтобы продолжить позже",
+    quickLoadTooltip: "Загрузить ранее сохраненное состояние игры",
     stateSaved: "Сохранено!",
     stateLoaded: "Загружено!",
     noSavedState: "Нет сохранения."

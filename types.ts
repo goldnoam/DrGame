@@ -92,6 +92,8 @@ export interface Translation {
   codeCopied: string;
   quickSave: string;
   quickLoad: string;
+  quickSaveTooltip: string;
+  quickLoadTooltip: string;
   stateSaved: string;
   stateLoaded: string;
   noSavedState: string;

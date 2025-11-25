@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { GameControl, GameGenerationResponse } from '../types';
 
@@ -47,9 +48,13 @@ export const generateGameCode = async (prompt: string, genre: string): Promise<G
         - Prevent default touch actions (scrolling/zooming) on the game canvas.
     10. If the request is unsafe, generate a simple "Pong" game.
 
-    Return JSON with:
-    - "html": Full HTML string.
-    - "controls": Array of { "icon": "arrows"|"wasd"|"mouse"|"click"|"space"|"other", "label": string, "keyName"?: string }.
+    Return valid JSON with the following structure (Do NOT use markdown code blocks):
+    {
+      "html": "Full HTML string here",
+      "controls": [
+        { "icon": "arrows" | "wasd" | "mouse" | "click" | "space" | "other", "label": "Control Label", "keyName": "Optional Key" }
+      ]
+    }
   `;
 
   let lastError: any;
@@ -61,27 +66,10 @@ export const generateGameCode = async (prompt: string, genre: string): Promise<G
         contents: fullPrompt,
         config: {
           maxOutputTokens: 8192,
-          temperature: 0.5, // Lower temperature for more stability
+          temperature: 0.6, 
           responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              html: { type: Type.STRING },
-              controls: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    icon: { type: Type.STRING, enum: ["arrows", "wasd", "mouse", "click", "space", "other"] },
-                    label: { type: Type.STRING },
-                    keyName: { type: Type.STRING }
-                  },
-                  required: ["icon", "label"]
-                }
-              }
-            },
-            required: ["html", "controls"]
-          },
+          // Note: responseSchema is intentionally removed here to prevent validation errors 
+          // on large HTML strings which frequently cause EMPTY_RESPONSE.
           safetySettings: [
             { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_ONLY_HIGH' },
             { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_ONLY_HIGH' },
@@ -109,6 +97,9 @@ export const generateGameCode = async (prompt: string, genre: string): Promise<G
 
       // Parse JSON
       let jsonStr = text.trim();
+      // Remove markdown code blocks if present (despite instruction)
+      jsonStr = jsonStr.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+      
       const firstOpen = jsonStr.indexOf('{');
       const lastClose = jsonStr.lastIndexOf('}');
       

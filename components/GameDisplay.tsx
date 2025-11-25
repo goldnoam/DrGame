@@ -460,7 +460,7 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
             <button
               onClick={handleQuickSave}
               className="group relative p-2 text-white/80 hover:text-white bg-black/40 hover:bg-black/60 rounded-full backdrop-blur-sm transition-all"
-              title={t.quickSave}
+              title={t.quickSaveTooltip}
               aria-label={t.quickSave}
             >
               {showStateSaved ? <Check size={20} className="text-green-400" /> : <Save size={20} />}
@@ -475,7 +475,7 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
             <button
               onClick={handleQuickLoad}
               className="group relative p-2 text-white/80 hover:text-white bg-black/40 hover:bg-black/60 rounded-full backdrop-blur-sm transition-all"
-              title={t.quickLoad}
+              title={t.quickLoadTooltip}
               aria-label={t.quickLoad}
             >
               {showStateLoaded ? <Check size={20} className="text-green-400" /> : <Upload size={20} />}
