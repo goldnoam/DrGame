@@ -36,7 +36,12 @@ export const generateGameCode = async (prompt: string, genre: string): Promise<G
         - Visual "Pause" button in top UI.
         - "PAUSED" overlay.
     7.  Synthetic Sound Effects using Web Audio API (OscillatorNode). No external audio files.
-    8.  If the request is unsafe, generate a simple "Pong" game.
+    8.  EXPOSE CONFIGURATION (MANDATORY for Level Editor):
+        - Define a global object \`window.GAME_CONFIG\` at the VERY TOP of your script.
+        - Put ALL tweakable values here: player speed, colors (hex), gravity, enemy count/speed, AND the LEVEL DATA (array/grid) if applicable.
+        - Define \`window.initGame()\` function that uses \`window.GAME_CONFIG\` to start/restart the game.
+        - Example: \`window.GAME_CONFIG = { playerSpeed: 5, enemyCount: 10, themeColor: "#ff0000", map: [...] };\`
+    9.  If the request is unsafe, generate a simple "Pong" game.
 
     Return JSON with:
     - "html": Full HTML string.

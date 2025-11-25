@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, Maximize2, Minimize2, Share2, Check, Star, Gamepad2, MousePointer2, MousePointerClick, ArrowUp, Download } from 'lucide-react';
+import { X, Maximize2, Minimize2, Share2, Check, Star, Gamepad2, MousePointer2, MousePointerClick, ArrowUp, Download, Pencil, RefreshCw, Save } from 'lucide-react';
 import { Translation, GameControl } from '../types';
 
 interface GameDisplayProps {
   code: string;
   prompt: string;
-  gameId?: string; // Optional because initial generation might not have ID passed immediately if not refactored fully, but we will pass it
+  gameId?: string; 
   controls?: GameControl[];
   rating?: number;
   onClose: () => void;
@@ -48,16 +48,38 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
   const [showCopied, setShowCopied] = useState(false);
   const [showDownloaded, setShowDownloaded] = useState(false);
   const [showControls, setShowControls] = useState(true);
+  const [showEditor, setShowEditor] = useState(false);
   const [currentRating, setCurrentRating] = useState(initialRating);
   const [hoverRating, setHoverRating] = useState(0);
+
+  // Editor State
+  const [editableConfig, setEditableConfig] = useState<Record<string, any>>({});
+  const [currentGameCode, setCurrentGameCode] = useState(code);
 
   useEffect(() => {
     setCurrentRating(initialRating || 0);
   }, [initialRating]);
 
+  // Extract Config when code changes or modal opens
   useEffect(() => {
-    if (iframeRef.current && code) {
-      const blob = new Blob([code], { type: 'text/html' });
+    // Attempt to extract window.GAME_CONFIG = { ... }
+    const match = currentGameCode.match(/window\.GAME_CONFIG\s*=\s*(\{[\s\S]*?\});/);
+    if (match && match[1]) {
+      try {
+        // Use Function constructor to safely evaluate the object literal (handles unquoted keys etc if strict JSON parse fails)
+        // Note: In a production app, robust parsing is better, but this handles JS object notation best.
+        // eslint-disable-next-line
+        const config = new Function(`return ${match[1]}`)(); 
+        setEditableConfig(config);
+      } catch (e) {
+        console.warn("Failed to parse GAME_CONFIG", e);
+      }
+    }
+  }, [currentGameCode]);
+
+  useEffect(() => {
+    if (iframeRef.current && currentGameCode) {
+      const blob = new Blob([currentGameCode], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
       iframeRef.current.src = url;
 
@@ -65,7 +87,7 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
         URL.revokeObjectURL(url);
       };
     }
-  }, [code]);
+  }, [currentGameCode]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -81,7 +103,7 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
 
   const handleDownload = () => {
     try {
-      const blob = new Blob([code], { type: 'text/html' });
+      const blob = new Blob([currentGameCode], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -101,7 +123,7 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
   const handleShare = async () => {
     const shareText = `Check out this game I created with Dr. Game AI!\n\nPrompt: ${prompt}`;
     const fileName = `dr-game-${gameId || Date.now()}.html`;
-    const blob = new Blob([code], { type: 'text/html' });
+    const blob = new Blob([currentGameCode], { type: 'text/html' });
     const file = new File([blob], fileName, { type: 'text/html' });
 
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -114,7 +136,6 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
         return;
       } catch (err) {
         console.log('File share cancelled or failed', err);
-        // Fallback to text sharing below
       }
     } else if (navigator.share) {
        try {
@@ -128,7 +149,6 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
       }
     }
 
-    // Fallback: Clipboard and Twitter
     try {
       await navigator.clipboard.writeText(shareText);
       setShowCopied(true);
@@ -144,6 +164,33 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
   const handleRate = (score: number) => {
     setCurrentRating(score);
     if (onRate) onRate(score);
+  };
+
+  const handleConfigChange = (key: string, value: any) => {
+    setEditableConfig(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+
+  const applyConfigChanges = () => {
+    try {
+      // Re-serialize the config object to JSON
+      const newConfigStr = JSON.stringify(editableConfig, null, 2);
+      
+      // Regex replace the old config in the code
+      // We look for window.GAME_CONFIG = { ... }; 
+      const newCode = currentGameCode.replace(
+        /window\.GAME_CONFIG\s*=\s*(\{[\s\S]*?\});/, 
+        `window.GAME_CONFIG = ${newConfigStr};`
+      );
+      
+      setCurrentGameCode(newCode);
+      
+      // Reload iframe essentially happens via useEffect on currentGameCode change
+    } catch (e) {
+      console.error("Failed to apply config", e);
+    }
   };
 
   useEffect(() => {
@@ -201,6 +248,81 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
     }
   };
 
+  // Helper to determine input type
+  const renderEditorInput = (key: string, value: any) => {
+    const type = typeof value;
+    
+    if (type === 'number') {
+      return (
+        <input 
+          type="number" 
+          value={value} 
+          onChange={(e) => handleConfigChange(key, parseFloat(e.target.value))}
+          className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm text-white focus:ring-1 focus:ring-primary"
+        />
+      );
+    }
+    
+    if (type === 'boolean') {
+      return (
+        <input 
+          type="checkbox" 
+          checked={value} 
+          onChange={(e) => handleConfigChange(key, e.target.checked)}
+          className="w-5 h-5 rounded border-slate-700 bg-slate-900 text-primary focus:ring-primary"
+        />
+      );
+    }
+    
+    if (type === 'string') {
+      // Color picker heuristic
+      if (value.startsWith('#') && (value.length === 4 || value.length === 7)) {
+        return (
+          <div className="flex gap-2">
+             <input 
+              type="color" 
+              value={value} 
+              onChange={(e) => handleConfigChange(key, e.target.value)}
+              className="w-8 h-8 rounded border-none cursor-pointer bg-transparent"
+            />
+            <input 
+              type="text" 
+              value={value} 
+              onChange={(e) => handleConfigChange(key, e.target.value)}
+              className="flex-1 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm text-white font-mono"
+            />
+          </div>
+        );
+      }
+      return (
+        <input 
+          type="text" 
+          value={value} 
+          onChange={(e) => handleConfigChange(key, e.target.value)}
+          className="w-full bg-slate-900 border border-slate-700 rounded px-2 py-1 text-sm text-white"
+        />
+      );
+    }
+
+    if (Array.isArray(value) || type === 'object') {
+       return (
+        <textarea
+          value={JSON.stringify(value, null, 2)}
+          onChange={(e) => {
+            try {
+              handleConfigChange(key, JSON.parse(e.target.value));
+            } catch (err) {
+              // Allow typing invalid JSON temporarily
+            }
+          }}
+          className="w-full h-24 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs font-mono text-slate-300"
+        />
+       );
+    }
+
+    return null;
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/90 backdrop-blur-md p-4 animate-fade-in">
       <div 
@@ -241,8 +363,25 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Editor Button */}
+            {Object.keys(editableConfig).length > 0 && (
+              <button
+                onClick={() => {
+                  setShowEditor(!showEditor);
+                  setShowControls(false); // Close controls if opening editor
+                }}
+                className={`p-2 rounded-full backdrop-blur-sm transition-all ${showEditor ? 'bg-secondary/50 text-white' : 'bg-black/40 text-white/80 hover:bg-black/60'}`}
+                title={t.editGame}
+              >
+                <Pencil size={20} />
+              </button>
+            )}
+
              <button
-              onClick={() => setShowControls(!showControls)}
+              onClick={() => {
+                setShowControls(!showControls);
+                setShowEditor(false);
+              }}
               className={`p-2 rounded-full backdrop-blur-sm transition-all ${showControls ? 'bg-primary/50 text-white' : 'bg-black/40 text-white/80 hover:bg-black/60'}`}
               title={t.controls}
             >
@@ -293,8 +432,42 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
           </div>
         </div>
 
+        {/* Level Editor Sidebar */}
+        {showEditor && (
+          <div className={`absolute top-16 bottom-4 ${isRTL ? 'right-4' : 'left-4'} z-30 w-80 bg-slate-950/90 backdrop-blur-md border border-slate-700 rounded-xl shadow-2xl flex flex-col animate-in fade-in slide-in-from-left-4 overflow-hidden`}>
+             <div className="flex items-center justify-between p-4 border-b border-slate-800 bg-slate-900/50">
+               <h3 className="text-white font-bold flex items-center gap-2">
+                 <Pencil size={16} className="text-secondary" />
+                 {t.editorTitle}
+               </h3>
+               <button onClick={() => setShowEditor(false)} className="text-slate-400 hover:text-white">
+                 <X size={16} />
+               </button>
+             </div>
+             
+             <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                {Object.entries(editableConfig).map(([key, value]) => (
+                  <div key={key} className="space-y-1">
+                    <label className="text-xs text-slate-400 uppercase tracking-wider font-semibold">{key}</label>
+                    {renderEditorInput(key, value)}
+                  </div>
+                ))}
+             </div>
+
+             <div className="p-4 border-t border-slate-800 bg-slate-900/50 flex gap-2">
+                <button 
+                  onClick={applyConfigChanges}
+                  className="flex-1 flex items-center justify-center gap-2 bg-secondary hover:bg-secondary/90 text-white py-2 rounded-lg text-sm font-bold transition-colors"
+                >
+                  <RefreshCw size={16} />
+                  {t.apply}
+                </button>
+             </div>
+          </div>
+        )}
+
         {/* Controls Overlay */}
-        {showControls && controls.length > 0 && (
+        {showControls && controls.length > 0 && !showEditor && (
           <div className={`absolute top-20 ${isRTL ? 'left-4' : 'right-4'} z-10 w-72 bg-black/60 backdrop-blur-md border border-white/10 rounded-xl p-4 shadow-2xl animate-in fade-in slide-in-from-right-4`}>
              <h3 className="text-white font-bold text-sm mb-4 flex items-center gap-2 border-b border-white/10 pb-2">
                <Gamepad2 size={16} className="text-primary" />

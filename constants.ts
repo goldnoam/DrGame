@@ -56,7 +56,11 @@ export const TRANSLATIONS: Record<Language, Translation> = {
       space: "Spacebar"
     },
     download: "Download Game",
-    downloadSuccess: "Download started"
+    downloadSuccess: "Download started",
+    editGame: "Edit Level",
+    editorTitle: "Level Editor",
+    apply: "Apply Changes",
+    reset: "Reset"
   },
   [Language.HEBREW]: {
     title: "ד\"ר גיים",
@@ -113,7 +117,11 @@ export const TRANSLATIONS: Record<Language, Translation> = {
       space: "רווח"
     },
     download: "הורד משחק",
-    downloadSuccess: "ההורדה החלה"
+    downloadSuccess: "ההורדה החלה",
+    editGame: "ערוך שלב",
+    editorTitle: "עורך שלבים",
+    apply: "החל שינויים",
+    reset: "אפס"
   },
   [Language.CHINESE]: {
     title: "游戏博士",
@@ -170,7 +178,11 @@ export const TRANSLATIONS: Record<Language, Translation> = {
       space: "空格键"
     },
     download: "下载游戏",
-    downloadSuccess: "下载开始"
+    downloadSuccess: "下载开始",
+    editGame: "编辑关卡",
+    editorTitle: "关卡编辑器",
+    apply: "应用更改",
+    reset: "重置"
   },
   [Language.HINDI]: {
     title: "Dr. Game",
@@ -227,7 +239,11 @@ export const TRANSLATIONS: Record<Language, Translation> = {
       space: "स्पेसबार"
     },
     download: "गेम डाउनलोड करें",
-    downloadSuccess: "डाउनलोड शुरू"
+    downloadSuccess: "डाउनलोड शुरू",
+    editGame: "स्तर संपादित करें",
+    editorTitle: "स्तर संपादक",
+    apply: "परिवर्तन लागू करें",
+    reset: "रीसेट"
   },
   [Language.FRENCH]: {
     title: "Dr. Game",
@@ -284,7 +300,11 @@ export const TRANSLATIONS: Record<Language, Translation> = {
       space: "Espace"
     },
     download: "Télécharger",
-    downloadSuccess: "Téléchargement lancé"
+    downloadSuccess: "Téléchargement lancé",
+    editGame: "Éditer le niveau",
+    editorTitle: "Éditeur de niveau",
+    apply: "Appliquer",
+    reset: "Réinitialiser"
   },
   [Language.GERMAN]: {
     title: "Dr. Game",
@@ -341,7 +361,11 @@ export const TRANSLATIONS: Record<Language, Translation> = {
       space: "Leertaste"
     },
     download: "Spiel herunterladen",
-    downloadSuccess: "Download gestartet"
+    downloadSuccess: "Download gestartet",
+    editGame: "Level bearbeiten",
+    editorTitle: "Level-Editor",
+    apply: "Änderungen anwenden",
+    reset: "Zurücksetzen"
   },
   [Language.RUSSIAN]: {
     title: "Доктор Игра",
@@ -398,6 +422,10 @@ export const TRANSLATIONS: Record<Language, Translation> = {
       space: "Пробел"
     },
     download: "Скачать игру",
-    downloadSuccess: "Скачивание"
+    downloadSuccess: "Скачивание",
+    editGame: "Редактировать уровень",
+    editorTitle: "Редактор уровней",
+    apply: "Применить",
+    reset: "Сброс"
   }
 };

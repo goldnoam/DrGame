@@ -82,6 +82,10 @@ export interface Translation {
   };
   download: string;
   downloadSuccess: string;
+  editGame: string;
+  editorTitle: string;
+  apply: string;
+  reset: string;
 }
 
 export interface GameGenerationResponse {
