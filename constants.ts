@@ -1,4 +1,5 @@
 
+
 import { Language, Translation, GameGenre } from './types';
 
 export const TRANSLATIONS: Record<Language, Translation> = {
@@ -58,6 +59,7 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     },
     download: "Download Game",
     downloadSuccess: "Download started",
+    downloadError: "Download failed",
     editGame: "Edit Level",
     editorTitle: "Level Editor",
     apply: "Apply Changes",
@@ -133,6 +135,7 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     },
     download: "הורד משחק",
     downloadSuccess: "ההורדה החלה",
+    downloadError: "שגיאה בהורדה",
     editGame: "ערוך שלב",
     editorTitle: "עורך שלבים",
     apply: "החל שינויים",
@@ -208,6 +211,7 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     },
     download: "下载游戏",
     downloadSuccess: "下载开始",
+    downloadError: "下载失败",
     editGame: "编辑关卡",
     editorTitle: "关卡编辑器",
     apply: "应用更改",
@@ -283,6 +287,7 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     },
     download: "गेम डाउनलोड करें",
     downloadSuccess: "डाउनलोड शुरू",
+    downloadError: "डाउनलोड विफल",
     editGame: "स्तर संपादित करें",
     editorTitle: "स्तर संपादक",
     apply: "परिवर्तन लागू करें",
@@ -358,6 +363,7 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     },
     download: "Télécharger",
     downloadSuccess: "Téléchargement lancé",
+    downloadError: "Échec du téléchargement",
     editGame: "Éditer le niveau",
     editorTitle: "Éditeur de niveau",
     apply: "Appliquer",
@@ -433,6 +439,7 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     },
     download: "Spiel herunterladen",
     downloadSuccess: "Download gestartet",
+    downloadError: "Download fehlgeschlagen",
     editGame: "Level bearbeiten",
     editorTitle: "Level-Editor",
     apply: "Änderungen anwenden",
@@ -508,6 +515,7 @@ export const TRANSLATIONS: Record<Language, Translation> = {
     },
     download: "Скачать игру",
     downloadSuccess: "Скачивание",
+    downloadError: "Ошибка скачивания",
     editGame: "Редактировать уровень",
     editorTitle: "Редактор уровней",
     apply: "Применить",

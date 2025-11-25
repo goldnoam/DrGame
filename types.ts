@@ -1,4 +1,5 @@
 
+
 export enum Language {
   ENGLISH = 'en',
   HEBREW = 'he',
@@ -83,6 +84,7 @@ export interface Translation {
   };
   download: string;
   downloadSuccess: string;
+  downloadError: string;
   editGame: string;
   editorTitle: string;
   apply: string;

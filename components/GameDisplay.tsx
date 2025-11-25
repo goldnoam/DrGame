@@ -1,6 +1,6 @@
 
 import React, { useEffect, useRef, useState } from 'react';
-import { X, Maximize2, Minimize2, Share2, Check, Star, Gamepad2, MousePointer2, MousePointerClick, ArrowUp, Download, Pencil, RefreshCw, RotateCcw, FileCode, Save, Upload, Volume2, Music } from 'lucide-react';
+import { X, Maximize2, Minimize2, Share2, Check, Star, Gamepad2, MousePointer2, MousePointerClick, ArrowUp, Download, Pencil, RefreshCw, RotateCcw, FileCode, Save, Upload, Volume2, Music, ChevronDown, ChevronRight, Settings } from 'lucide-react';
 import { Translation, GameControl } from '../types';
 
 interface GameDisplayProps {
@@ -60,6 +60,15 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
   const [refreshKey, setRefreshKey] = useState(0);
   const [isIframeLoaded, setIsIframeLoaded] = useState(false);
   
+  // Hover state for controls tooltip
+  const [hoveredControl, setHoveredControl] = useState<number | null>(null);
+  
+  // Collapsible Editor Sections
+  const [expandedSections, setExpandedSections] = useState({
+    sound: true,
+    game: true
+  });
+  
   // New States for Actions
   const [showCodeCopied, setShowCodeCopied] = useState(false);
   const [showStateSaved, setShowStateSaved] = useState(false);
@@ -74,14 +83,18 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
     setCurrentRating(initialRating || 0);
   }, [initialRating]);
 
+  // Sync internal code state if prop changes (e.g. selecting different game from history)
+  useEffect(() => {
+    setCurrentGameCode(code);
+  }, [code]);
+
   // Extract Config when code changes or modal opens
   useEffect(() => {
     // Attempt to extract window.GAME_CONFIG = { ... }
     const match = currentGameCode.match(/window\.GAME_CONFIG\s*=\s*(\{[\s\S]*?\});/);
     if (match && match[1]) {
       try {
-        // Use Function constructor to safely evaluate the object literal (handles unquoted keys etc if strict JSON parse fails)
-        // Note: In a production app, robust parsing is better, but this handles JS object notation best.
+        // Use Function constructor to safely evaluate the object literal
         // eslint-disable-next-line
         const config = new Function(`return ${match[1]}`)(); 
         setEditableConfig(config);
@@ -97,8 +110,14 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
       const blob = new Blob([currentGameCode], { type: 'text/html' });
       const url = URL.createObjectURL(blob);
       iframeRef.current.src = url;
+      
+      // Fallback: If onLoad doesn't fire within 1s, show iframe anyway
+      const timer = setTimeout(() => {
+        setIsIframeLoaded(true);
+      }, 1000);
 
       return () => {
+        clearTimeout(timer);
         URL.revokeObjectURL(url);
       };
     }
@@ -132,15 +151,6 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
       setTimeout(() => setShowDownloaded(false), 2000);
     } catch (err) {
       console.error('Download failed', err);
-    }
-  };
-
-  // Deprecated in favor of Quick Save for state, but kept if needed for props
-  const handleSave = () => {
-    if (onSave && gameId) {
-      onSave(gameId, currentGameCode);
-      setShowSaved(true);
-      setTimeout(() => setShowSaved(false), 2000);
     }
   };
 
@@ -197,21 +207,25 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
     }));
   };
 
+  const toggleSection = (section: 'sound' | 'game') => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
   const applyConfigChanges = () => {
     try {
       // Re-serialize the config object to JSON
       const newConfigStr = JSON.stringify(editableConfig, null, 2);
       
       // Regex replace the old config in the code
-      // We look for window.GAME_CONFIG = { ... }; 
       const newCode = currentGameCode.replace(
         /window\.GAME_CONFIG\s*=\s*(\{[\s\S]*?\});/, 
         `window.GAME_CONFIG = ${newConfigStr};`
       );
       
       setCurrentGameCode(newCode);
-      
-      // Reload iframe essentially happens via useEffect on currentGameCode change
     } catch (e) {
       console.error("Failed to apply config", e);
     }
@@ -224,10 +238,8 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
         if (typeof win.initGame === 'function') {
            win.initGame();
         } else if (win.GAME_CONFIG && typeof win.GAME_CONFIG.initGame === 'function') {
-           // Fallback if initGame is inside config
            win.GAME_CONFIG.initGame();
         } else {
-           // If initGame missing, force hard reload
            setRefreshKey(k => k + 1);
         }
       } catch (e) {
@@ -237,8 +249,6 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
        setRefreshKey(k => k + 1);
     }
   };
-
-  // --- New Action Handlers ---
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(currentGameCode)
@@ -254,7 +264,6 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
   const handleQuickSave = () => {
     if (!gameId) return;
     try {
-      // Use gameId to save state specific to this game
       localStorage.setItem(`dr_game_state_${gameId}`, currentGameCode);
       setShowStateSaved(true);
       setTimeout(() => setShowStateSaved(false), 2000);
@@ -285,40 +294,43 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
   }, []);
 
   const renderControlIcon = (control: GameControl) => {
+    // Enhanced hover effects with glowing shadow, scale, and pulse
+    const baseClasses = "transition-all duration-300 group-hover:scale-110 group-hover:drop-shadow-[0_0_15px_rgba(99,102,241,0.8)] group-hover:animate-pulse";
+    
     switch (control.icon) {
       case 'wasd':
         return (
-          <div className="flex flex-col items-center gap-1.5 p-1 group-hover:scale-110 group-hover:drop-shadow-lg transition-all duration-200">
-             <KeyCap className="w-8 h-8 text-sm group-hover:bg-slate-600 transition-colors">W</KeyCap>
+          <div className={`flex flex-col items-center gap-1.5 p-1 ${baseClasses}`}>
+             <KeyCap className="w-8 h-8 text-sm group-hover:bg-slate-600 transition-colors group-hover:text-primary">W</KeyCap>
              <div className="flex gap-1.5">
-               <KeyCap className="w-8 h-8 text-sm group-hover:bg-slate-600 transition-colors">A</KeyCap>
-               <KeyCap className="w-8 h-8 text-sm group-hover:bg-slate-600 transition-colors">S</KeyCap>
-               <KeyCap className="w-8 h-8 text-sm group-hover:bg-slate-600 transition-colors">D</KeyCap>
+               <KeyCap className="w-8 h-8 text-sm group-hover:bg-slate-600 transition-colors group-hover:text-primary">A</KeyCap>
+               <KeyCap className="w-8 h-8 text-sm group-hover:bg-slate-600 transition-colors group-hover:text-primary">S</KeyCap>
+               <KeyCap className="w-8 h-8 text-sm group-hover:bg-slate-600 transition-colors group-hover:text-primary">D</KeyCap>
              </div>
           </div>
         );
       case 'arrows':
         return (
-          <div className="flex flex-col items-center gap-1.5 p-1 group-hover:scale-110 group-hover:drop-shadow-lg transition-all duration-200">
-             <KeyCap className="w-8 h-8 group-hover:bg-slate-600 transition-colors"><ArrowUp size={16} /></KeyCap>
+          <div className={`flex flex-col items-center gap-1.5 p-1 ${baseClasses}`}>
+             <KeyCap className="w-8 h-8 group-hover:bg-slate-600 transition-colors group-hover:text-primary"><ArrowUp size={16} /></KeyCap>
              <div className="flex gap-1.5">
-               <KeyCap className="w-8 h-8 group-hover:bg-slate-600 transition-colors"><ArrowUp size={16} className="-rotate-90" /></KeyCap>
-               <KeyCap className="w-8 h-8 group-hover:bg-slate-600 transition-colors"><ArrowUp size={16} className="rotate-180" /></KeyCap>
-               <KeyCap className="w-8 h-8 group-hover:bg-slate-600 transition-colors"><ArrowUp size={16} className="rotate-90" /></KeyCap>
+               <KeyCap className="w-8 h-8 group-hover:bg-slate-600 transition-colors group-hover:text-primary"><ArrowUp size={16} className="-rotate-90" /></KeyCap>
+               <KeyCap className="w-8 h-8 group-hover:bg-slate-600 transition-colors group-hover:text-primary"><ArrowUp size={16} className="rotate-180" /></KeyCap>
+               <KeyCap className="w-8 h-8 group-hover:bg-slate-600 transition-colors group-hover:text-primary"><ArrowUp size={16} className="rotate-90" /></KeyCap>
              </div>
           </div>
         );
       case 'space':
-        return <KeyCap className="h-8 w-24 text-xs uppercase tracking-wider group-hover:scale-105 group-hover:shadow-primary/50 transition-all duration-200">{t.controlIcons.space}</KeyCap>;
+        return <KeyCap className={`h-8 w-24 text-xs uppercase tracking-wider group-hover:text-primary ${baseClasses}`}>{t.controlIcons.space}</KeyCap>;
       case 'mouse':
         return (
-          <div className="w-12 h-12 flex items-center justify-center bg-slate-800 rounded-xl border border-slate-600 shadow-md group-hover:scale-110 group-hover:border-primary/50 group-hover:shadow-lg transition-all duration-200">
-             <MousePointer2 size={24} className="text-primary animate-pulse" />
+          <div className={`w-12 h-12 flex items-center justify-center bg-slate-800 rounded-xl border border-slate-600 shadow-md group-hover:border-primary/50 ${baseClasses}`}>
+             <MousePointer2 size={24} className="text-primary" />
           </div>
         );
       case 'click':
         return (
-          <div className="w-12 h-12 flex items-center justify-center bg-slate-800 rounded-xl border border-slate-600 shadow-md relative group-hover:scale-110 group-hover:border-secondary/50 group-hover:shadow-lg transition-all duration-200">
+          <div className={`w-12 h-12 flex items-center justify-center bg-slate-800 rounded-xl border border-slate-600 shadow-md relative group-hover:border-secondary/50 ${baseClasses}`}>
              <MousePointerClick size={24} className="text-secondary" />
              <span className="absolute -top-1 -right-1 flex h-3 w-3">
                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
@@ -327,16 +339,14 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
           </div>
         );
       default:
-        return <KeyCap className="h-8 min-w-[32px] px-2 text-xs uppercase group-hover:scale-105 group-hover:shadow-primary/50 transition-all duration-200">{control.keyName || "?"}</KeyCap>;
+        return <KeyCap className={`h-8 min-w-[32px] px-2 text-xs uppercase group-hover:text-primary ${baseClasses}`}>{control.keyName || "?"}</KeyCap>;
     }
   };
 
-  // Helper to determine input type
   const renderEditorInput = (key: string, value: any) => {
     const type = typeof value;
     const lowerKey = key.toLowerCase();
     
-    // Volume Controls (Range Slider)
     if (type === 'number' && (lowerKey.includes('volume') || lowerKey.includes('gain'))) {
        return (
          <div className="flex items-center gap-2">
@@ -355,7 +365,6 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
        );
     }
 
-    // Sound Type (Dropdown)
     if (type === 'string' && (lowerKey.includes('type') && (lowerKey.includes('sound') || lowerKey.includes('wave')))) {
        return (
         <div className="flex items-center gap-2">
@@ -400,7 +409,6 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
     }
     
     if (type === 'string') {
-      // Color picker heuristic
       if (value.startsWith('#') && (value.length === 4 || value.length === 7)) {
         return (
           <div className="flex gap-2">
@@ -437,7 +445,6 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
             try {
               handleConfigChange(key, JSON.parse(e.target.value));
             } catch (err) {
-              // Allow typing invalid JSON temporarily
             }
           }}
           className="w-full h-24 bg-slate-900 border border-slate-700 rounded px-2 py-1 text-xs font-mono text-slate-300"
@@ -448,20 +455,16 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
     return null;
   };
 
-  const getGroupedConfig = () => {
+  const { soundKeys, gameKeys } = (() => {
     const soundKeys = Object.keys(editableConfig).filter(k => 
       k.toLowerCase().includes('sound') || 
       k.toLowerCase().includes('music') || 
       k.toLowerCase().includes('volume') || 
       k.toLowerCase().includes('audio')
     );
-    
     const gameKeys = Object.keys(editableConfig).filter(k => !soundKeys.includes(k));
-    
     return { soundKeys, gameKeys };
-  };
-
-  const { soundKeys, gameKeys } = getGroupedConfig();
+  })();
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/90 backdrop-blur-md p-4 animate-fade-in">
@@ -476,7 +479,6 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
           <div className="flex items-center gap-4 flex-shrink-0">
              <span className="text-white/80 font-mono text-sm shadow-black drop-shadow-md hidden lg:block">{t.gameReady}</span>
              
-             {/* Rating System */}
              {onRate && (
                <div className="flex items-center gap-1 bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
                   <span className="text-xs text-slate-400 mr-2 hidden sm:inline">{t.rateGame}:</span>
@@ -505,22 +507,20 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
           </div>
 
           <div className="flex items-center gap-2 flex-shrink-0">
-             {/* Copy Code Button */}
              <button
               onClick={handleCopyCode}
-              className="group relative p-2 text-white/80 hover:text-white bg-black/40 hover:bg-black/60 rounded-full backdrop-blur-sm transition-all"
+              className="group relative p-2 text-white/80 hover:text-white bg-black/40 hover:bg-black/60 rounded-full backdrop-blur-sm transition-all pointer-events-auto"
               title={t.copyCode}
               aria-label={t.copyCode}
             >
               {showCodeCopied ? <Check size={20} className="text-green-400" /> : <FileCode size={20} />}
               {showCodeCopied && (
-                <div className="absolute top-full right-0 mt-3 px-3 py-1.5 bg-green-500/90 text-white text-xs font-bold rounded shadow-lg whitespace-nowrap z-50 animate-in fade-in slide-in-from-top-1">
+                <div className="absolute top-full right-0 mt-3 px-3 py-1.5 bg-green-500/90 text-white text-xs font-bold rounded shadow-lg whitespace-nowrap z-50 animate-in fade-in slide-in-from-top-1 pointer-events-none">
                   {t.codeCopied}
                 </div>
               )}
             </button>
 
-            {/* Save Game State (Using Quick Save Key) */}
             <button
               onClick={handleQuickSave}
               className="group relative p-2 text-white/80 hover:text-white bg-black/40 hover:bg-black/60 rounded-full backdrop-blur-sm transition-all"
@@ -529,13 +529,12 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
             >
               {showStateSaved ? <Check size={20} className="text-green-400" /> : <Save size={20} />}
               {showStateSaved && (
-                <div className="absolute top-full right-0 mt-3 px-3 py-1.5 bg-blue-500/90 text-white text-xs font-bold rounded shadow-lg whitespace-nowrap z-50 animate-in fade-in slide-in-from-top-1">
+                <div className="absolute top-full right-0 mt-3 px-3 py-1.5 bg-blue-500/90 text-white text-xs font-bold rounded shadow-lg whitespace-nowrap z-50 animate-in fade-in slide-in-from-top-1 pointer-events-none">
                   {t.stateSaved}
                 </div>
               )}
             </button>
 
-             {/* Load Game State (Using Quick Load Key) */}
             <button
               onClick={handleQuickLoad}
               className="group relative p-2 text-white/80 hover:text-white bg-black/40 hover:bg-black/60 rounded-full backdrop-blur-sm transition-all"
@@ -544,24 +543,22 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
             >
               {showStateLoaded ? <Check size={20} className="text-green-400" /> : <Upload size={20} />}
               {showStateLoaded && (
-                <div className="absolute top-full right-0 mt-3 px-3 py-1.5 bg-blue-500/90 text-white text-xs font-bold rounded shadow-lg whitespace-nowrap z-50 animate-in fade-in slide-in-from-top-1">
+                <div className="absolute top-full right-0 mt-3 px-3 py-1.5 bg-blue-500/90 text-white text-xs font-bold rounded shadow-lg whitespace-nowrap z-50 animate-in fade-in slide-in-from-top-1 pointer-events-none">
                   {t.stateLoaded}
                 </div>
               )}
               {showNoState && (
-                <div className="absolute top-full right-0 mt-3 px-3 py-1.5 bg-red-600/90 text-white text-xs font-bold rounded shadow-lg whitespace-nowrap z-50 animate-in fade-in slide-in-from-top-1">
+                <div className="absolute top-full right-0 mt-3 px-3 py-1.5 bg-red-600/90 text-white text-xs font-bold rounded shadow-lg whitespace-nowrap z-50 animate-in fade-in slide-in-from-top-1 pointer-events-none">
                   {t.noSavedState}
                 </div>
               )}
             </button>
 
-
-            {/* Editor Button */}
             {Object.keys(editableConfig).length > 0 && (
               <button
                 onClick={() => {
                   setShowEditor(!showEditor);
-                  setShowControls(false); // Close controls if opening editor
+                  setShowControls(false); 
                 }}
                 className={`p-2 rounded-full backdrop-blur-sm transition-all ${showEditor ? 'bg-secondary/50 text-white' : 'bg-black/40 text-white/80 hover:bg-black/60'}`}
                 title={t.editGame}
@@ -600,7 +597,7 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
             >
               {showDownloaded ? <Check size={20} className="text-green-400" /> : <Download size={20} />}
               {showDownloaded && (
-                <div className="absolute top-full right-0 mt-3 px-3 py-1.5 bg-black/80 text-white text-xs font-bold rounded shadow-lg whitespace-nowrap z-50 animate-in fade-in slide-in-from-top-1">
+                <div className="absolute top-full right-0 mt-3 px-3 py-1.5 bg-black/80 text-white text-xs font-bold rounded shadow-lg whitespace-nowrap z-50 animate-in fade-in slide-in-from-top-1 pointer-events-none">
                   {t.downloadSuccess}
                 </div>
               )}
@@ -613,9 +610,8 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
               aria-label={t.share}
             >
               {showCopied ? <Check size={20} className="text-green-400" /> : <Share2 size={20} />}
-              
               {showCopied && (
-                <div className="absolute top-full right-0 mt-3 px-3 py-1.5 bg-black/80 text-white text-xs font-bold rounded shadow-lg whitespace-nowrap z-50 animate-in fade-in slide-in-from-top-1">
+                <div className="absolute top-full right-0 mt-3 px-3 py-1.5 bg-black/80 text-white text-xs font-bold rounded shadow-lg whitespace-nowrap z-50 animate-in fade-in slide-in-from-top-1 pointer-events-none">
                   {t.shareSuccess}
                 </div>
               )}
@@ -653,35 +649,52 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
                </button>
              </div>
              
-             <div className="flex-1 overflow-y-auto p-4 space-y-6">
-                
-                {/* Sound Settings Section */}
+             <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {soundKeys.length > 0 && (
-                  <div className="space-y-3">
-                    <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1 border-b border-slate-800 pb-1">
-                      <Volume2 size={12} />
-                      {t.soundSettings}
-                    </h4>
-                    {soundKeys.map(key => (
-                      <div key={key} className="space-y-1">
-                         <label className="text-xs text-slate-300 font-medium capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</label>
-                         {renderEditorInput(key, editableConfig[key])}
+                  <div className="bg-slate-900/50 rounded-lg overflow-hidden border border-slate-800">
+                    <button 
+                      onClick={() => toggleSection('sound')}
+                      className="w-full flex items-center justify-between p-3 text-xs font-bold text-slate-400 uppercase tracking-wider hover:bg-slate-800/50 transition-colors"
+                    >
+                      <span className="flex items-center gap-2"><Volume2 size={14} /> {t.soundSettings}</span>
+                      {expandedSections.sound ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                    </button>
+                    
+                    {expandedSections.sound && (
+                      <div className="p-3 space-y-3 border-t border-slate-800">
+                        {soundKeys.map(key => (
+                          <div key={key} className="space-y-1">
+                             <label className="text-xs text-slate-300 font-medium capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</label>
+                             {renderEditorInput(key, editableConfig[key])}
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </div>
                 )}
 
-                {/* Game Settings Section */}
-                <div className="space-y-3">
-                  <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-800 pb-1">Game Settings</h4>
-                  {gameKeys.map(key => (
-                    <div key={key} className="space-y-1">
-                      <label className="text-xs text-slate-300 font-medium capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</label>
-                      {renderEditorInput(key, editableConfig[key])}
-                    </div>
-                  ))}
-                </div>
+                {gameKeys.length > 0 && (
+                  <div className="bg-slate-900/50 rounded-lg overflow-hidden border border-slate-800">
+                    <button 
+                      onClick={() => toggleSection('game')}
+                      className="w-full flex items-center justify-between p-3 text-xs font-bold text-slate-400 uppercase tracking-wider hover:bg-slate-800/50 transition-colors"
+                    >
+                      <span className="flex items-center gap-2"><Settings size={14} /> Game Settings</span>
+                      {expandedSections.game ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                    </button>
 
+                    {expandedSections.game && (
+                      <div className="p-3 space-y-3 border-t border-slate-800">
+                        {gameKeys.map(key => (
+                          <div key={key} className="space-y-1">
+                            <label className="text-xs text-slate-300 font-medium capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</label>
+                            {renderEditorInput(key, editableConfig[key])}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
              </div>
 
              <div className="p-4 border-t border-slate-800 bg-slate-900/50 flex gap-2">
@@ -710,11 +723,20 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
              </h3>
              <div className="space-y-4">
                {controls.map((control, idx) => (
-                 <div key={idx} className="flex items-center justify-between gap-4 group hover:bg-white/5 p-2 rounded-lg transition-colors cursor-default">
-                    <div 
-                      className="flex-shrink-0 flex items-center justify-center min-w-[60px]"
-                      title={control.label}
-                    >
+                 <div 
+                    key={idx} 
+                    className="relative flex items-center justify-between gap-4 group hover:bg-white/5 p-2 rounded-lg transition-colors cursor-default"
+                    onMouseEnter={() => setHoveredControl(idx)}
+                    onMouseLeave={() => setHoveredControl(null)}
+                 >
+                    {/* Tooltip */}
+                    {hoveredControl === idx && (
+                      <div className="absolute -top-10 left-10 transform -translate-x-1/2 bg-slate-950 border border-slate-700 text-white text-xs px-2 py-1 rounded shadow-xl pointer-events-none z-50 whitespace-nowrap animate-in fade-in zoom-in-95 duration-200">
+                         {control.label}
+                      </div>
+                    )}
+
+                    <div className="flex-shrink-0 flex items-center justify-center min-w-[60px]">
                       {renderControlIcon(control)}
                     </div>
                     <span className="text-slate-200 font-medium text-sm text-right flex-1 leading-tight group-hover:text-white transition-colors">{control.label}</span>
@@ -729,7 +751,7 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
           ref={iframeRef}
           title="Generated Game"
           onLoad={() => setIsIframeLoaded(true)}
-          className={`w-full h-full border-none bg-slate-950 touch-none transition-opacity duration-700 ease-in-out ${isIframeLoaded ? 'opacity-100' : 'opacity-0'}`}
+          className={`w-full h-full border-none bg-slate-950 transition-opacity duration-700 ease-in-out ${isIframeLoaded ? 'opacity-100' : 'opacity-0'}`}
           sandbox="allow-scripts allow-forms allow-pointer-lock allow-modals"
         />
       </div>
