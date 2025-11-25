@@ -77,6 +77,7 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
             <button 
               onClick={onClose}
               className="p-2 hover:bg-slate-700 rounded-full text-slate-400 hover:text-white transition-colors"
+              aria-label={t.close}
             >
               <X size={20} />
             </button>
@@ -139,6 +140,7 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                             setDeleteConfirmId(null);
                           }}
                           className="px-2 py-1 bg-red-600 hover:bg-red-500 text-white text-xs rounded transition-colors"
+                          aria-label={t.delete}
                         >
                           {t.delete}
                         </button>
@@ -148,6 +150,7 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                             setDeleteConfirmId(null);
                           }}
                           className="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs rounded transition-colors"
+                          aria-label={t.cancel}
                         >
                           {t.cancel}
                         </button>
@@ -158,6 +161,7 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                       <button
                         onClick={() => onSelectGame(item)}
                         className="flex-1 flex items-center justify-center gap-2 bg-primary/10 hover:bg-primary/20 text-primary text-sm py-2 rounded transition-colors font-semibold"
+                        aria-label={t.play}
                       >
                         <Play size={16} />
                         {t.play}
@@ -169,6 +173,7 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                         }}
                         className="p-2 text-slate-500 hover:text-green-400 hover:bg-green-400/10 rounded transition-colors"
                         title={t.download}
+                        aria-label={t.download}
                       >
                          <Download size={16} />
                       </button>
@@ -179,6 +184,7 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                         }}
                         className="p-2 text-slate-500 hover:text-blue-400 hover:bg-blue-400/10 rounded transition-colors"
                         title={copiedId === item.id ? t.copied : t.copyPrompt}
+                        aria-label={t.copyPrompt}
                       >
                          {copiedId === item.id ? <Check size={16} /> : <Copy size={16} />}
                       </button>
@@ -189,6 +195,7 @@ const HistorySidebar: React.FC<HistorySidebarProps> = ({
                         }}
                         className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded transition-colors"
                         title={t.delete}
+                        aria-label={t.delete}
                       >
                         <Trash2 size={16} />
                       </button>

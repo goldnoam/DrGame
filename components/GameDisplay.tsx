@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, Maximize2, Minimize2, Share2, Check, Star, Gamepad2, MousePointer2, MousePointerClick, ArrowUp, Download, Pencil, RefreshCw } from 'lucide-react';
+import { X, Maximize2, Minimize2, Share2, Check, Star, Gamepad2, MousePointer2, MousePointerClick, ArrowUp, Download, Pencil, RefreshCw, RotateCcw } from 'lucide-react';
 import { Translation, GameControl } from '../types';
 
 interface GameDisplayProps {
@@ -25,6 +25,7 @@ const KeyCap: React.FC<KeyCapProps> = ({ children, className = "" }) => (
     flex items-center justify-center 
     bg-slate-700 border-t border-x border-slate-600 border-b-4 border-b-slate-900 
     rounded-md text-slate-100 font-mono font-bold shadow-lg select-none
+    transition-transform duration-100 active:translate-y-1 active:border-b-0
     ${className}
   `}>
     {children}
@@ -193,6 +194,19 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
     }
   };
 
+  const handleReset = () => {
+    if (iframeRef.current?.contentWindow) {
+      // Try to call initGame if it exists on the window object
+      const win = iframeRef.current.contentWindow as any;
+      if (typeof win.initGame === 'function') {
+        win.initGame();
+      } else {
+        // Fallback: reload the iframe source to restart
+        iframeRef.current.src = iframeRef.current.src;
+      }
+    }
+  };
+
   useEffect(() => {
     const handleFsChange = () => {
       setIsFullscreen(!!document.fullscreenElement);
@@ -205,7 +219,7 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
     switch (control.icon) {
       case 'wasd':
         return (
-          <div className="flex flex-col items-center gap-1.5 p-1">
+          <div className="flex flex-col items-center gap-1.5 p-1 group-hover:scale-110 transition-transform">
              <KeyCap className="w-8 h-8 text-sm">W</KeyCap>
              <div className="flex gap-1.5">
                <KeyCap className="w-8 h-8 text-sm">A</KeyCap>
@@ -216,7 +230,7 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
         );
       case 'arrows':
         return (
-          <div className="flex flex-col items-center gap-1.5 p-1">
+          <div className="flex flex-col items-center gap-1.5 p-1 group-hover:scale-110 transition-transform">
              <KeyCap className="w-8 h-8"><ArrowUp size={16} /></KeyCap>
              <div className="flex gap-1.5">
                <KeyCap className="w-8 h-8"><ArrowUp size={16} className="-rotate-90" /></KeyCap>
@@ -226,16 +240,16 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
           </div>
         );
       case 'space':
-        return <KeyCap className="h-8 w-24 text-xs uppercase tracking-wider">{t.controlIcons.space}</KeyCap>;
+        return <KeyCap className="h-8 w-24 text-xs uppercase tracking-wider group-hover:scale-105 transition-transform">{t.controlIcons.space}</KeyCap>;
       case 'mouse':
         return (
-          <div className="w-12 h-12 flex items-center justify-center bg-slate-800 rounded-xl border border-slate-600 shadow-md">
+          <div className="w-12 h-12 flex items-center justify-center bg-slate-800 rounded-xl border border-slate-600 shadow-md group-hover:scale-110 transition-transform">
              <MousePointer2 size={24} className="text-primary animate-pulse" />
           </div>
         );
       case 'click':
         return (
-          <div className="w-12 h-12 flex items-center justify-center bg-slate-800 rounded-xl border border-slate-600 shadow-md relative">
+          <div className="w-12 h-12 flex items-center justify-center bg-slate-800 rounded-xl border border-slate-600 shadow-md relative group-hover:scale-110 transition-transform">
              <MousePointerClick size={24} className="text-secondary" />
              <span className="absolute -top-1 -right-1 flex h-3 w-3">
                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary opacity-75"></span>
@@ -244,7 +258,7 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
           </div>
         );
       default:
-        return <KeyCap className="h-8 min-w-[32px] px-2 text-xs uppercase">{control.keyName || "?"}</KeyCap>;
+        return <KeyCap className="h-8 min-w-[32px] px-2 text-xs uppercase group-hover:scale-110 transition-transform">{control.keyName || "?"}</KeyCap>;
     }
   };
 
@@ -346,7 +360,9 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
                       onClick={() => handleRate(star)}
                       onMouseEnter={() => setHoverRating(star)}
                       onMouseLeave={() => setHoverRating(0)}
-                      className="focus:outline-none transition-transform hover:scale-110"
+                      className="focus:outline-none transition-transform hover:scale-110 p-0.5"
+                      aria-label={`Rate ${star} stars`}
+                      title={`Rate ${star} stars`}
                     >
                       <Star 
                         size={16} 
@@ -372,10 +388,20 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
                 }}
                 className={`p-2 rounded-full backdrop-blur-sm transition-all ${showEditor ? 'bg-secondary/50 text-white' : 'bg-black/40 text-white/80 hover:bg-black/60'}`}
                 title={t.editGame}
+                aria-label={t.editGame}
               >
                 <Pencil size={20} />
               </button>
             )}
+            
+            <button
+              onClick={handleReset}
+              className="p-2 text-white/80 hover:text-white bg-black/40 hover:bg-black/60 rounded-full backdrop-blur-sm transition-all"
+              title={t.reset}
+              aria-label={t.reset}
+            >
+              <RotateCcw size={20} />
+            </button>
 
              <button
               onClick={() => {
@@ -384,6 +410,7 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
               }}
               className={`p-2 rounded-full backdrop-blur-sm transition-all ${showControls ? 'bg-primary/50 text-white' : 'bg-black/40 text-white/80 hover:bg-black/60'}`}
               title={t.controls}
+              aria-label={t.controls}
             >
               <Gamepad2 size={20} />
             </button>
@@ -392,6 +419,7 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
               onClick={handleDownload}
               className="group relative p-2 text-white/80 hover:text-white bg-black/40 hover:bg-black/60 rounded-full backdrop-blur-sm transition-all"
               title={t.download}
+              aria-label={t.download}
             >
               {showDownloaded ? <Check size={20} className="text-green-400" /> : <Download size={20} />}
               {showDownloaded && (
@@ -405,6 +433,7 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
               onClick={handleShare}
               className="group relative p-2 text-white/80 hover:text-white bg-black/40 hover:bg-black/60 rounded-full backdrop-blur-sm transition-all"
               title={t.share}
+              aria-label={t.share}
             >
               {showCopied ? <Check size={20} className="text-green-400" /> : <Share2 size={20} />}
               
@@ -419,6 +448,7 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
               onClick={toggleFullscreen}
               className="p-2 text-white/80 hover:text-white bg-black/40 hover:bg-black/60 rounded-full backdrop-blur-sm transition-all"
               title={t.fullscreen}
+              aria-label={t.fullscreen}
             >
               {isFullscreen ? <Minimize2 size={20} /> : <Maximize2 size={20} />}
             </button>
@@ -426,6 +456,7 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
               onClick={onClose}
               className="p-2 text-white/80 hover:text-red-400 bg-black/40 hover:bg-black/60 rounded-full backdrop-blur-sm transition-all"
               title={t.close}
+              aria-label={t.close}
             >
               <X size={20} />
             </button>
@@ -440,7 +471,7 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
                  <Pencil size={16} className="text-secondary" />
                  {t.editorTitle}
                </h3>
-               <button onClick={() => setShowEditor(false)} className="text-slate-400 hover:text-white">
+               <button onClick={() => setShowEditor(false)} className="text-slate-400 hover:text-white" aria-label={t.close}>
                  <X size={16} />
                </button>
              </div>
@@ -468,18 +499,21 @@ const GameDisplay: React.FC<GameDisplayProps> = ({
 
         {/* Controls Overlay */}
         {showControls && controls.length > 0 && !showEditor && (
-          <div className={`absolute top-20 ${isRTL ? 'left-4' : 'right-4'} z-10 w-72 bg-black/60 backdrop-blur-md border border-white/10 rounded-xl p-4 shadow-2xl animate-in fade-in slide-in-from-right-4`}>
+          <div className={`absolute top-20 ${isRTL ? 'left-4' : 'right-4'} z-10 w-72 bg-slate-900/95 backdrop-blur-md border border-slate-700 rounded-xl p-4 shadow-2xl animate-in fade-in slide-in-from-right-4`}>
              <h3 className="text-white font-bold text-sm mb-4 flex items-center gap-2 border-b border-white/10 pb-2">
                <Gamepad2 size={16} className="text-primary" />
                {t.controls}
              </h3>
              <div className="space-y-4">
                {controls.map((control, idx) => (
-                 <div key={idx} className="flex items-center justify-between gap-4">
-                    <div className="flex-shrink-0 flex items-center justify-center min-w-[60px]">
+                 <div key={idx} className="flex items-center justify-between gap-4 group hover:bg-white/5 p-2 rounded-lg transition-colors cursor-default">
+                    <div 
+                      className="flex-shrink-0 flex items-center justify-center min-w-[60px]"
+                      title={control.label}
+                    >
                       {renderControlIcon(control)}
                     </div>
-                    <span className="text-slate-200 font-medium text-sm text-right flex-1 leading-tight">{control.label}</span>
+                    <span className="text-slate-200 font-medium text-sm text-right flex-1 leading-tight group-hover:text-white transition-colors">{control.label}</span>
                  </div>
                ))}
              </div>
