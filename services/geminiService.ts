@@ -6,13 +6,17 @@ const getApiKey = () => {
   if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
     return process.env.API_KEY;
   }
-  // Fallback or empty string (will likely cause 403/400 from API if empty, but won't crash app load)
+  // If undefined or empty, return empty string which will be caught later
   return '';
 };
 
 export const generateGameCode = async (prompt: string, genre: string): Promise<GameGenerationResponse> => {
   try {
     const apiKey = getApiKey();
+    if (!apiKey) {
+      throw new Error('API_KEY_MISSING');
+    }
+
     const ai = new GoogleGenAI({ apiKey });
 
     const fullPrompt = `
@@ -86,8 +90,19 @@ export const generateGameCode = async (prompt: string, genre: string): Promise<G
         throw new Error('EMPTY_RESPONSE');
     }
 
-    // Sanitize text just in case model adds backticks
-    const jsonStr = text.replace(/^```json/, '').replace(/```$/, '').trim();
+    // Robust JSON cleaning/extraction
+    let jsonStr = text.trim();
+    // Attempt to extract JSON from code blocks or mixed text
+    const firstOpen = jsonStr.indexOf('{');
+    const lastClose = jsonStr.lastIndexOf('}');
+    
+    if (firstOpen !== -1 && lastClose !== -1 && lastClose > firstOpen) {
+      jsonStr = jsonStr.substring(firstOpen, lastClose + 1);
+    }
+    
+    // Fallback: cleanup common markdown patterns if regex is still needed
+    // (though the substring method usually handles the wrapping markdown chars)
+    
     const json = JSON.parse(jsonStr);
     return json as GameGenerationResponse;
 
@@ -96,6 +111,9 @@ export const generateGameCode = async (prompt: string, genre: string): Promise<G
     if (error.message === 'SAFETY_ERROR') {
       throw new Error('SAFETY_ERROR');
     }
+    if (error.message === 'API_KEY_MISSING') {
+      throw new Error('API_KEY_MISSING');
+    }
     throw error;
   }
 };
@@ -103,6 +121,9 @@ export const generateGameCode = async (prompt: string, genre: string): Promise<G
 export const generateGamePreview = async (prompt: string, genre: string): Promise<string> => {
   try {
     const apiKey = getApiKey();
+    if (!apiKey) {
+      throw new Error('API_KEY_MISSING');
+    }
     const ai = new GoogleGenAI({ apiKey });
 
     const fullPrompt = `Generate a gameplay screenshot for a browser game.
@@ -130,8 +151,11 @@ export const generateGamePreview = async (prompt: string, genre: string): Promis
         }
     }
     throw new Error("No image generated");
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error generating preview:", error);
+    if (error.message === 'API_KEY_MISSING') {
+      throw new Error('API_KEY_MISSING');
+    }
     throw error;
   }
 };

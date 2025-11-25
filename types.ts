@@ -52,6 +52,7 @@ export interface Translation {
   error: string;
   errorSafety: string;
   errorUnknown: string;
+  errorApiKey: string;
   gameReady: string;
   fullscreen: string;
   close: string;

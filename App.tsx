@@ -87,7 +87,11 @@ const App: React.FC = () => {
       setShowPreview(true);
     } catch (err: any) {
       console.error(err);
-      setError(t.error); // Or a specific preview error if you want
+      if (err.message === 'API_KEY_MISSING') {
+        setError(t.errorApiKey);
+      } else {
+        setError(err.message || t.error);
+      }
     } finally {
       setIsPreviewLoading(false);
     }
@@ -131,6 +135,8 @@ const App: React.FC = () => {
       console.error(err);
       if (err.message === 'SAFETY_ERROR') {
         setError(t.errorSafety);
+      } else if (err.message === 'API_KEY_MISSING') {
+        setError(t.errorApiKey);
       } else {
         setError(t.error);
       }
@@ -306,21 +312,22 @@ const App: React.FC = () => {
                   </label>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex gap-2 w-full md:w-auto">
                   <button
                     onClick={handlePreview}
                     disabled={isLoading || isPreviewLoading || !prompt.trim()}
-                    className="flex items-center gap-2 px-4 py-3 rounded-lg font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed border border-slate-700"
+                    className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed border border-slate-700 min-w-[160px]"
                   >
                     {isPreviewLoading ? <Loader2 className="animate-spin" size={20} /> : <Eye size={20} />}
                     <span className="hidden sm:inline">{t.previewBtn}</span>
+                    <span className="sm:hidden">Preview</span>
                   </button>
 
                   <button
                     onClick={handleGenerate}
                     disabled={isLoading || !prompt.trim()}
                     className={`
-                      flex items-center gap-2 px-8 py-3 rounded-lg font-bold text-white shadow-lg transition-all
+                      flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-bold text-white shadow-lg transition-all min-w-[160px]
                       ${isLoading || !prompt.trim() 
                         ? 'bg-slate-700 cursor-not-allowed opacity-50' 
                         : 'bg-gradient-to-r from-primary to-secondary hover:shadow-primary/25 hover:scale-105 active:scale-95'
