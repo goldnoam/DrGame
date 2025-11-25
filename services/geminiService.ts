@@ -1,11 +1,20 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { GameControl, GameGenerationResponse } from '../types';
 
-const apiKey = process.env.API_KEY || '';
-const ai = new GoogleGenAI({ apiKey });
+const getApiKey = () => {
+  // Defensive check for process to avoid ReferenceError in browser
+  if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
+    return process.env.API_KEY;
+  }
+  // Fallback or empty string (will likely cause 403/400 from API if empty, but won't crash app load)
+  return '';
+};
 
 export const generateGameCode = async (prompt: string, genre: string): Promise<GameGenerationResponse> => {
   try {
+    const apiKey = getApiKey();
+    const ai = new GoogleGenAI({ apiKey });
+
     const fullPrompt = `
       You are an expert game developer known as "Dr. Game". 
       Your task is to create a complete, playable, single-file HTML5 game based on the user's description.
@@ -19,16 +28,21 @@ export const generateGameCode = async (prompt: string, genre: string): Promise<G
       3.  The game must be fully playable with keyboard or mouse controls as appropriate.
       4.  Style the game to look polished and modern. If no specific theme is requested, use a dark, neon, or retro arcade aesthetic.
       5.  Include a "Restart" button within the game UI logic if the game ends.
-      6.  Ensure the canvas or game container fits within the window but is responsive.
-      7.  If the user's request is not safe or violates policies, generate a simple "Pong" game instead.
-      8.  Incorporate sound effects using the Web Audio API (OscillatorNode) if appropriate for the genre. Do NOT use external audio files. Create synthetic sounds for actions (e.g., jump, shoot, score, game over). Handle AudioContext autoplay policy by resuming it on the first user interaction (click or key press).
+      6.  IMPLEMENT A PAUSE FEATURE:
+          - Allow pausing/resuming via the 'P' key.
+          - Include a visible "Pause" button in the game UI (top corner).
+          - Show a semi-transparent overlay with text "PAUSED" when the game is paused.
+          - The game loop (requestAnimationFrame) must stop updates or skip logic while paused.
+      7.  Ensure the canvas or game container fits within the window but is responsive.
+      8.  If the user's request is not safe or violates policies, generate a simple "Pong" game instead.
+      9.  Incorporate sound effects using the Web Audio API (OscillatorNode) if appropriate for the genre. Do NOT use external audio files. Create synthetic sounds for actions (e.g., jump, shoot, score, game over). Handle AudioContext autoplay policy by resuming it on the first user interaction (click or key press).
 
       Return the response in JSON format with two fields:
       - "html": The full HTML code for the game.
       - "controls": An array of objects describing the controls used in the game. Each object should have:
           - "icon": One of "arrows", "wasd", "mouse", "click", "space", "other".
           - "label": Short description of the action (e.g., "Move", "Shoot").
-          - "keyName": (Optional) Specific key name if "icon" is "other" (e.g., "R").
+          - "keyName": (Optional) Specific key name if "icon" is "other" (e.g., "R", "P").
     `;
 
     const response = await ai.models.generateContent({
@@ -72,7 +86,9 @@ export const generateGameCode = async (prompt: string, genre: string): Promise<G
         throw new Error('EMPTY_RESPONSE');
     }
 
-    const json = JSON.parse(text);
+    // Sanitize text just in case model adds backticks
+    const jsonStr = text.replace(/^```json/, '').replace(/```$/, '').trim();
+    const json = JSON.parse(jsonStr);
     return json as GameGenerationResponse;
 
   } catch (error: any) {
@@ -80,6 +96,42 @@ export const generateGameCode = async (prompt: string, genre: string): Promise<G
     if (error.message === 'SAFETY_ERROR') {
       throw new Error('SAFETY_ERROR');
     }
+    throw error;
+  }
+};
+
+export const generateGamePreview = async (prompt: string, genre: string): Promise<string> => {
+  try {
+    const apiKey = getApiKey();
+    const ai = new GoogleGenAI({ apiKey });
+
+    const fullPrompt = `Generate a gameplay screenshot for a browser game.
+    Genre: ${genre}
+    Description: ${prompt}
+    Style: Polished, colorful, arcade style. High quality interface.`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash-image',
+      contents: {
+        parts: [{ text: fullPrompt }]
+      },
+      config: {
+        imageConfig: {
+          aspectRatio: "16:9"
+        }
+      }
+    });
+
+    for (const candidate of response.candidates || []) {
+        for (const part of candidate.content?.parts || []) {
+            if (part.inlineData && part.inlineData.data) {
+                return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+            }
+        }
+    }
+    throw new Error("No image generated");
+  } catch (error) {
+    console.error("Error generating preview:", error);
     throw error;
   }
 };

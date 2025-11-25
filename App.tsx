@@ -1,18 +1,22 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { Upload, Sparkles, Loader2, Gamepad2, History } from 'lucide-react';
+import { Upload, Sparkles, Loader2, Gamepad2, History, Eye } from 'lucide-react';
 import { TRANSLATIONS } from './constants';
 import { Language, GameGenre, GameHistoryItem, GameControl } from './types';
 import LanguageSelector from './components/LanguageSelector';
 import Footer from './components/Footer';
 import GameDisplay from './components/GameDisplay';
 import HistorySidebar from './components/HistorySidebar';
-import { generateGameCode } from './services/geminiService';
+import PreviewModal from './components/PreviewModal';
+import { generateGameCode, generateGamePreview } from './services/geminiService';
 
 const App: React.FC = () => {
   const [language, setLanguage] = useState<Language>(Language.ENGLISH);
   const [prompt, setPrompt] = useState('');
   const [genre, setGenre] = useState<GameGenre>(GameGenre.ANY);
   const [isLoading, setIsLoading] = useState(false);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
   
   // Current Active Game State
   const [activeGame, setActiveGame] = useState<{
@@ -73,9 +77,28 @@ const App: React.FC = () => {
     localStorage.setItem('dr_game_history', JSON.stringify(history));
   }, [history]);
 
+  const handlePreview = async () => {
+    if (!prompt.trim()) return;
+    setIsPreviewLoading(true);
+    setError(null);
+    try {
+      const imageUrl = await generateGamePreview(prompt, genre);
+      setPreviewImage(imageUrl);
+      setShowPreview(true);
+    } catch (err: any) {
+      console.error(err);
+      setError(t.error); // Or a specific preview error if you want
+    } finally {
+      setIsPreviewLoading(false);
+    }
+  };
+
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
 
+    // Close preview if open
+    setShowPreview(false);
+    
     setIsLoading(true);
     setError(null);
     try {
@@ -283,29 +306,40 @@ const App: React.FC = () => {
                   </label>
                 </div>
 
-                <button
-                  onClick={handleGenerate}
-                  disabled={isLoading || !prompt.trim()}
-                  className={`
-                    flex items-center gap-2 px-8 py-3 rounded-lg font-bold text-white shadow-lg transition-all
-                    ${isLoading || !prompt.trim() 
-                      ? 'bg-slate-700 cursor-not-allowed opacity-50' 
-                      : 'bg-gradient-to-r from-primary to-secondary hover:shadow-primary/25 hover:scale-105 active:scale-95'
-                    }
-                  `}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="animate-spin" size={20} />
-                      {t.generating}
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles size={20} />
-                      {t.generateBtn}
-                    </>
-                  )}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handlePreview}
+                    disabled={isLoading || isPreviewLoading || !prompt.trim()}
+                    className="flex items-center gap-2 px-4 py-3 rounded-lg font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed border border-slate-700"
+                  >
+                    {isPreviewLoading ? <Loader2 className="animate-spin" size={20} /> : <Eye size={20} />}
+                    <span className="hidden sm:inline">{t.previewBtn}</span>
+                  </button>
+
+                  <button
+                    onClick={handleGenerate}
+                    disabled={isLoading || !prompt.trim()}
+                    className={`
+                      flex items-center gap-2 px-8 py-3 rounded-lg font-bold text-white shadow-lg transition-all
+                      ${isLoading || !prompt.trim() 
+                        ? 'bg-slate-700 cursor-not-allowed opacity-50' 
+                        : 'bg-gradient-to-r from-primary to-secondary hover:shadow-primary/25 hover:scale-105 active:scale-95'
+                      }
+                    `}
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="animate-spin" size={20} />
+                        {t.generating}
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles size={20} />
+                        {t.generateBtn}
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
             
@@ -337,6 +371,15 @@ const App: React.FC = () => {
         onDeleteGame={handleDeleteHistoryItem}
         t={t}
         isRTL={isRTL}
+      />
+
+      <PreviewModal
+        isOpen={showPreview}
+        onClose={() => setShowPreview(false)}
+        imageSrc={previewImage}
+        onGenerate={handleGenerate}
+        isLoading={isLoading}
+        t={t}
       />
 
       {activeGame && (

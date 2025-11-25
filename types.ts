@@ -43,6 +43,12 @@ export interface Translation {
   or: string;
   generateBtn: string;
   generating: string;
+  previewBtn: string;
+  previewing: string;
+  previewTitle: string;
+  previewSubtitle: string;
+  closePreview: string;
+  generateFromPreview: string;
   error: string;
   errorSafety: string;
   errorUnknown: string;
