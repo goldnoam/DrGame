@@ -1,0 +1,5 @@
+{
+  "name": "Dr. Game - AI Game Generator",
+  "description": "An AI-powered application that generates playable web games from text descriptions or files.",
+  "requestFramePermissions": []
+}
